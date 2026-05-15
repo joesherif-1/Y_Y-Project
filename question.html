@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Question {{ question_num }}{% endblock %}
+
+{% block content %}
+<div class="question-screen">
+    <div class="progress-bar">
+        <div class="progress" style="width: {{ (question_num / total_questions) * 100 }}%"></div>
+    </div>
+    <p class="progress-text">Question {{ question_num }} of {{ total_questions }}</p>
+    
+    <h2>{{ question }}</h2>
+    
+    <form method="post">
+        <div class="options">
+            <label class="option">
+                <input type="radio" name="answer" value="yes" required>
+                <span>Yes</span>
+            </label>
+            <label class="option">
+                <input type="radio" name="answer" value="no">
+                <span>No</span>
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            {% if question_num < total_questions %}Next Question{% else %}See Results{% endif %}
+        </button>
+    </form>
+</div>
+{% endblock %}

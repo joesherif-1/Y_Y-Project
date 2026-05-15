@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+<div class="result-screen">
+    <h1>Assessment Results</h1>
+    
+    <div class="result-card">
+        <h2>{{ disease_name }} Risk</h2>
+        <div class="percentage">{{ percentage }}%</div>
+        <p class="result-text">
+            Based on your answers, there is a {{ percentage }}% likelihood that you may have {{ disease_name }}.
+        </p>
+    </div>
+    
+    <div class="disclaimer">
+        <p><strong>Disclaimer:</strong> This assessment is for informational purposes only and should not be used as a substitute for professional medical advice. Please consult with a healthcare provider for proper diagnosis and treatment.</p>
+    </div>
+    
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Start New Assessment</a>
+</div>
+{% endblock %}
