@@ -27,7 +27,7 @@ A Python App, or HTML website used to detect cancer. The goal of the project is 
 
 ## Deployment Instructions
 
-### Option 1: Deploy to Render (Free, Recommended)
+### Option 1: Deploy to Render
 
 1. **Create a GitHub repository** and push your code:
    ```bash
@@ -51,86 +51,5 @@ A Python App, or HTML website used to detect cancer. The goal of the project is 
 
 4. **Your app will be deployed** and you'll get a URL like `https://your-app.onrender.com`
 
-### Option 2: Deploy to Heroku (Free tier available)
-
-1. **Install Heroku CLI** and sign up at [heroku.com](https://heroku.com)
-
-2. **Login to Heroku:**
-   ```bash
-   heroku login
-   ```
-
-3. **Create a Heroku app:**
-   ```bash
-   heroku create your-app-name
-   ```
-
-4. **Set environment variables:**
-   ```bash
-   heroku config:set SECRET_KEY=your-random-secret-key
-   ```
-
-5. **Deploy:**
-   ```bash
-   git push heroku main
-   ```
-
-### Option 3: Deploy to Railway (Free)
-
-1. **Sign up at [railway.app](https://railway.app)**
-
-2. **Create a new project** and connect your GitHub repository
-
-3. **Railway will automatically detect** it's a Python app and deploy it
-
-4. **Add environment variable** `SECRET_KEY` in the project settings
-
-## Customization
-
-### Editing Questions
-In `app.py`, modify the `QUESTIONS` list:
-```python
-QUESTIONS = [
-    "Your custom question 1",
-    "Your custom question 2",
-    # ... up to 20 questions
-]
-```
-
-### Changing Disease Name
-In `app.py`, modify:
-```python
-DISEASE_NAME = "Your Disease Name"
-```
-
-### Modifying Start Text
-In `app.py`, modify:
-```python
-START_TEXT = "Your custom introduction text"
-```
-
-### Adjusting Risk Calculation
-The current calculation counts "yes" answers as risk factors. To modify this logic, edit the `result()` function in `app.py`.
-
-## File Structure
-
-```
-.
-├── app.py                 # Main Flask application
-├── Procfile              # Deployment configuration
-├── requirements.txt      # Python dependencies
-├── .gitignore           # Git ignore file
-├── static/
-│   └── style.css         # Website styling
-└── templates/
-    ├── base.html         # Base template
-    ├── index.html        # Start screen
-    ├── question.html     # Question page
-    └── result.html       # Results page
-```
-
-## Notes
-
-- This is a foundation/template website. All questions, text, and disease information should be customized before use.
-- The assessment is for informational purposes only and should not replace professional medical advice.
-- The `SECRET_KEY` environment variable is set automatically in production deployments.
+Made with Love in Saudi Arabia 🇸🇦
+By Younus Hassen and Yousef Sherif
