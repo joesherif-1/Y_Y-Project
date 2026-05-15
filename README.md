@@ -1,15 +1,14 @@
-# Health Assessment Website
+# Cancer Assessment Website
 
-A Python Flask website foundation for health assessments. The site presents a start screen with customizable text, asks 20 questions, and provides a percentage result indicating the likelihood of having a specific disease.
+A Python App, or HTML website used to detect cancer. The goal of the project is to help people upload pictures of their hands, and answer a questionnare, Based on the given data it gives an inference of whether or not you have the likely chance of cancer with a ML model.
 
-## Features
+## Features for Prototype 0.1
 
 - Start screen with customizable introduction text
 - 20-question assessment with progress tracking
 - Yes/No answer format for each question
 - Results page showing percentage risk
 - Modern, responsive UI with gradient styling
-- Easy customization of questions and disease type
 
 ## Local Setup Instructions
 
@@ -17,12 +16,6 @@ A Python Flask website foundation for health assessments. The site presents a st
    ```bash
    pip install -r requirements.txt
    ```
-
-2. **Customize the assessment:**
-   - Edit `app.py` to modify:
-     - `DISEASE_NAME` - the name of the disease being assessed
-     - `START_TEXT` - the introduction text on the start screen
-     - `QUESTIONS` - the list of 20 questions to ask
 
 3. **Run the application:**
    ```bash
