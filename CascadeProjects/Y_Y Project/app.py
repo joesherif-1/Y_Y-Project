@@ -1,7 +1,12 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 
-app = Flask(__name__)
+# Get the directory where this script is located
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+app = Flask(__name__, 
+            template_folder=os.path.join(basedir, 'templates'),
+            static_folder=os.path.join(basedir, 'static'))
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Configuration - EDIT THESE VALUES
