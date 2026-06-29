@@ -1,21 +1,13 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 
-# Get the directory where this script is located
-basedir = os.path.abspath(os.path.dirname(__file__))
-
-# Debug: Print paths to help diagnose Render deployment issues
-print(f"Current working directory: {os.getcwd()}")
-print(f"Script location: {basedir}")
-print(f"Template folder: {os.path.join(basedir, 'templates')}")
-print(f"Static folder: {os.path.join(basedir, 'static')}")
-print(f"Template folder exists: {os.path.exists(os.path.join(basedir, 'templates'))}")
-print(f"Static folder exists: {os.path.exists(os.path.join(basedir, 'static'))}")
-
-app = Flask(__name__, 
-            template_folder=os.path.join(basedir, 'templates'),
-            static_folder=os.path.join(basedir, 'static'))
+app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Test endpoint to verify app is running
+@app.route('/test')
+def test():
+    return "App is running successfully!"
 
 # Configuration - EDIT THESE VALUES
 DISEASE_NAME = "Example Disease"
