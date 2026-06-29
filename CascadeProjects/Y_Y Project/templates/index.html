@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ disease_name }} Assessment{% endblock %}
+
+{% block content %}
+<div class="start-screen">
+    <h1>{{ disease_name }} Assessment</h1>
+    <p class="start-text">{{ start_text }}</p>
+    <form action="{{ url_for('question', question_num=1) }}" method="get">
+        <button type="submit" class="btn btn-primary">Start Assessment</button>
+    </form>
+</div>
+{% endblock %}
