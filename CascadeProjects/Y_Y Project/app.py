@@ -4,6 +4,14 @@ from flask import Flask, render_template, request, redirect, url_for, session
 # Get the directory where this script is located
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# Debug: Print paths to help diagnose Render deployment issues
+print(f"Current working directory: {os.getcwd()}")
+print(f"Script location: {basedir}")
+print(f"Template folder: {os.path.join(basedir, 'templates')}")
+print(f"Static folder: {os.path.join(basedir, 'static')}")
+print(f"Template folder exists: {os.path.exists(os.path.join(basedir, 'templates'))}")
+print(f"Static folder exists: {os.path.exists(os.path.join(basedir, 'static'))}")
+
 app = Flask(__name__, 
             template_folder=os.path.join(basedir, 'templates'),
             static_folder=os.path.join(basedir, 'static'))
