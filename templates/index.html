@@ -13,14 +13,44 @@
     <div class="photo-step">
         <h2>Step 1: Take a photo of your hand</h2>
         <p class="hint">
-            This is your check-in step. The photo stays on your device &mdash; it is
-            never uploaded or analyzed.
+            The photo stays on your device &mdash; it is never uploaded.
         </p>
         <label class="photo-label" for="photo-input">
             <span id="photo-prompt">📷 Tap to take or choose a photo</span>
         </label>
         <input type="file" id="photo-input" accept="image/*" capture="user" hidden>
-        <img id="photo-preview" class="photo-preview" alt="Your hand photo" hidden>
+
+        <canvas id="hand-canvas" hidden></canvas>
+        <p class="hint" id="tap-hint" hidden>
+            <strong>Optional AI spot check:</strong> tap any mole or dark spot on your photo and our
+            neural network (the same one behind the AI Skin Check) will zoom in and analyze
+            that exact spot.
+        </p>
+
+        <div id="spot-panel" hidden>
+            <p class="hint" id="spot-status">Close-up of the spot you tapped:</p>
+            <img id="crop-preview" class="crop-preview" alt="Zoomed crop of the tapped spot">
+            <button type="button" id="spot-analyze" class="btn btn-primary">Analyze this spot</button>
+            <div id="spot-result" hidden>
+                <div class="prob-row">
+                    <span class="prob-label">Looks benign-like</span>
+                    <div class="prob-track"><div id="bar-benign" class="prob-fill benign"></div></div>
+                    <span id="pct-benign" class="prob-pct"></span>
+                </div>
+                <div class="prob-row">
+                    <span class="prob-label">Looks suspicious-like</span>
+                    <div class="prob-track"><div id="bar-mal" class="prob-fill mal"></div></div>
+                    <span id="pct-mal" class="prob-pct"></span>
+                </div>
+                <p class="hint" id="spot-advice" style="text-align:left"></p>
+                <p class="hint" style="text-align:left">
+                    The AI only judges the small square you tapped, and hand photos are lower quality
+                    than the medical images it trained on. For a better check, take a close-up of just
+                    that spot on the <a href="{{ url_for('skin_check') }}">AI Skin Check</a> page &mdash;
+                    and remember: this is an experiment, not a diagnosis.
+                </p>
+            </div>
+        </div>
     </div>
 
     <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary disabled" aria-disabled="true">
@@ -28,32 +58,119 @@
     </a>
     <p class="hint" id="start-hint">Add a photo above to unlock the questionnaire.</p>
 
-    <a class="link-secondary" href="{{ url_for('skin_check') }}">🔬 New: try our AI Skin Check (version 2 experiment)</a>
+    <a class="link-secondary" href="{{ url_for('skin_check') }}">🔬 Try our AI Skin Check (version 2 experiment)</a>
 
     <div class="disclaimer">
         <p><strong>Important:</strong> This tool is a student project for learning about
-        cancer risk factors. It cannot detect or diagnose cancer, and a photo of your
-        hand cannot show whether you have cancer. If you are worried about your health,
-        please talk to a doctor.</p>
+        cancer risk factors. It cannot detect or diagnose cancer. The AI spot check compares
+        a photo to its training data &mdash; only a doctor can examine you. If you are worried
+        about your health, please talk to a doctor.</p>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 <script>
     const input = document.getElementById('photo-input');
-    const preview = document.getElementById('photo-preview');
+    const canvas = document.getElementById('hand-canvas');
+    const ctx = canvas.getContext('2d');
     const prompt = document.getElementById('photo-prompt');
+    const tapHint = document.getElementById('tap-hint');
+    const spotPanel = document.getElementById('spot-panel');
+    const spotStatus = document.getElementById('spot-status');
+    const cropPreview = document.getElementById('crop-preview');
+    const analyzeBtn = document.getElementById('spot-analyze');
+    const spotResult = document.getElementById('spot-result');
     const startBtn = document.getElementById('start-btn');
     const startHint = document.getElementById('start-hint');
+
+    let handImage = null;
+    let cropCanvas = null;     // 224x224 crop fed to the model
+    let modelPromise = null;   // model loads lazily, on the first tap
 
     input.addEventListener('change', () => {
         const file = input.files[0];
         if (!file) return;
-        preview.src = URL.createObjectURL(file);
-        preview.hidden = false;
+        const img = new Image();
+        img.onload = () => {
+            handImage = img;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0);
+            canvas.hidden = false;
+            tapHint.hidden = false;
+            spotPanel.hidden = true;
+        };
+        img.src = URL.createObjectURL(file);
         prompt.textContent = '📷 Photo added! Tap to retake';
         startBtn.classList.remove('disabled');
         startBtn.removeAttribute('aria-disabled');
         startHint.textContent = 'Great, you are ready to start.';
+    });
+
+    canvas.addEventListener('click', (e) => {
+        if (!handImage) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * canvas.width / rect.width;
+        const y = (e.clientY - rect.top) * canvas.height / rect.height;
+
+        // Crop a square around the tap, a quarter of the shorter photo side.
+        const size = Math.min(canvas.width, canvas.height) / 4;
+        const sx = Math.min(Math.max(x - size / 2, 0), canvas.width - size);
+        const sy = Math.min(Math.max(y - size / 2, 0), canvas.height - size);
+
+        cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropCanvas.height = 224;
+        cropCanvas.getContext('2d').drawImage(handImage, sx, sy, size, size, 0, 0, 224, 224);
+        cropPreview.src = cropCanvas.toDataURL();
+
+        // Mark the tapped area on the hand photo.
+        ctx.drawImage(handImage, 0, 0);
+        ctx.strokeStyle = '#1a6fb5';
+        ctx.lineWidth = Math.max(3, canvas.width / 200);
+        ctx.strokeRect(sx, sy, size, size);
+
+        spotStatus.textContent = 'Close-up of the spot you tapped:';
+        spotResult.hidden = true;
+        analyzeBtn.hidden = false;
+        spotPanel.hidden = false;
+
+        if (!modelPromise) {
+            modelPromise = tf.loadGraphModel('/static/model/model.json');
+        }
+    });
+
+    analyzeBtn.addEventListener('click', async () => {
+        if (!cropCanvas) return;
+        analyzeBtn.textContent = 'Analyzing...';
+        try {
+            const model = await modelPromise;
+            // The model starts with a Rescaling layer, so we feed raw 0-255 pixels.
+            const t = tf.tidy(() => tf.browser.fromPixels(cropCanvas).toFloat().expandDims(0));
+            const out = model.predict(t);
+            const malignant = (await out.data())[0];
+            t.dispose(); out.dispose();
+
+            const pctMal = Math.round(malignant * 100);
+            const pctBen = 100 - pctMal;
+            document.getElementById('bar-benign').style.width = pctBen + '%';
+            document.getElementById('bar-mal').style.width = pctMal + '%';
+            document.getElementById('pct-benign').textContent = pctBen + '%';
+            document.getElementById('pct-mal').textContent = pctMal + '%';
+            const advice = document.getElementById('spot-advice');
+            if (pctMal >= 50) {
+                advice.innerHTML = 'This spot looks more similar to the <strong>suspicious</strong> ' +
+                    'training images. Worth showing to a dermatologist, and you can note it in the ' +
+                    'questionnaire under "a change in a mole or patch of skin".';
+            } else {
+                advice.innerHTML = 'This spot looks more similar to the <strong>benign</strong> ' +
+                    'training images. Keep an eye on it, and see a doctor if it changes.';
+            }
+            spotResult.hidden = false;
+            analyzeBtn.hidden = true;
+        } catch (err) {
+            spotStatus.textContent = 'The AI model could not be loaded — you can still take the questionnaire.';
+        }
+        analyzeBtn.textContent = 'Analyze this spot';
     });
 
     startBtn.addEventListener('click', (e) => {

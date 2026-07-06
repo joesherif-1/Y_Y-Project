@@ -97,6 +97,29 @@ h2 { font-size: 1.1rem; color: var(--navy); margin-bottom: 14px; }
     border-radius: 8px;
     border: 1px solid var(--line);
 }
+#hand-canvas {
+    margin-top: 14px;
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    cursor: crosshair;
+}
+.crop-preview {
+    display: block;
+    width: 112px;
+    height: 112px;
+    margin: 8px auto 12px;
+    border-radius: 8px;
+    border: 2px solid var(--blue);
+}
+#spot-panel {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+    text-align: left;
+}
 
 /* Buttons */
 .btn {
