@@ -86,7 +86,7 @@
         statusBox.hidden = false;
         statusBox.textContent = 'Loading the AI model...';
         try {
-            model = await tf.loadLayersModel('/static/model/model.json');
+            model = await tf.loadGraphModel('/static/model/model.json');
             tf.tidy(() => model.predict(tf.zeros([1, 224, 224, 3])));  // warm-up
             let info = 'AI model loaded.';
             try {
