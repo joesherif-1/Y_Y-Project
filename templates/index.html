@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="start-screen">
+    <h1>Check your risk factors</h1>
+    <p class="start-text">
+        Answer a short questionnaire about your health and lifestyle, and get an
+        educational score showing how many known cancer <strong>risk factors</strong> apply to you.
+    </p>
+
+    <div class="photo-step">
+        <h2>Step 1: Take a photo of your hand</h2>
+        <p class="hint">
+            This is your check-in step. The photo stays on your device &mdash; it is
+            never uploaded or analyzed.
+        </p>
+        <label class="photo-label" for="photo-input">
+            <span id="photo-prompt">📷 Tap to take or choose a photo</span>
+        </label>
+        <input type="file" id="photo-input" accept="image/*" capture="user" hidden>
+        <img id="photo-preview" class="photo-preview" alt="Your hand photo" hidden>
+    </div>
+
+    <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary disabled" aria-disabled="true">
+        Start Questionnaire
+    </a>
+    <p class="hint" id="start-hint">Add a photo above to unlock the questionnaire.</p>
+
+    <div class="disclaimer">
+        <p><strong>Important:</strong> This tool is a student project for learning about
+        cancer risk factors. It cannot detect or diagnose cancer, and a photo of your
+        hand cannot show whether you have cancer. If you are worried about your health,
+        please talk to a doctor.</p>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('photo-input');
+    const preview = document.getElementById('photo-preview');
+    const prompt = document.getElementById('photo-prompt');
+    const startBtn = document.getElementById('start-btn');
+    const startHint = document.getElementById('start-hint');
+
+    input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+        prompt.textContent = '📷 Photo added! Tap to retake';
+        startBtn.classList.remove('disabled');
+        startBtn.removeAttribute('aria-disabled');
+        startHint.textContent = 'Great, you are ready to start.';
+    });
+
+    startBtn.addEventListener('click', (e) => {
+        if (startBtn.classList.contains('disabled')) e.preventDefault();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Your Score - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="result-screen">
+    <h1>Your Risk-Factor Score</h1>
+
+    <div class="result-card">
+        <div class="score-circle {{ r.level_class }}">
+            <span class="score-number">{{ r.total }}</span>
+            <span class="score-max">out of {{ r.max_score }}</span>
+        </div>
+        <div class="level-badge {{ r.level_class }}">{{ r.level }} risk-factor level</div>
+
+        {% if r.level_class == 'low' %}
+        <p class="result-text">Few known cancer risk factors apply to you right now. Keep up healthy habits,
+        and remember this score is not a medical test.</p>
+        {% elif r.level_class == 'medium' %}
+        <p class="result-text">Some known cancer risk factors apply to you. That does <strong>not</strong> mean you have
+        cancer &mdash; most people with risk factors never get it &mdash; but it is a good reason to mention these
+        things at your next doctor visit.</p>
+        {% else %}
+        <p class="result-text">Several known cancer risk factors apply to you. This is <strong>not</strong> a diagnosis,
+        but we recommend booking an appointment with a doctor to talk about your answers.</p>
+        {% endif %}
+    </div>
+
+    {% if r.red_flag %}
+    <div class="alert">
+        <p><strong>Please note:</strong> you reported a symptom (like unexplained weight loss, a new lump, or unusual
+        bleeding) that has lasted 2 weeks or more. Doctors recommend getting symptoms like these checked soon,
+        whatever your score is.</p>
+    </div>
+    {% endif %}
+
+    <div class="hand-card">
+        <h2>About your hand photo</h2>
+        <p>Your hand photo added <strong>+0 points</strong> to your score. That is on purpose:
+        a photo of a hand cannot show whether someone has cancer, so this tool does not
+        analyze it or compare it with anyone else's photos.</p>
+        <p>In a real, in-person exam a doctor <em>can</em> sometimes notice general health clues
+        on the hands — such as changes in fingernail shape (called "clubbing"), very pale nails
+        or palms, or a yellow tint to the skin. Only a healthcare professional can judge signs
+        like these, which is one more reason a check-up beats any website.</p>
+    </div>
+
+    {% if r.breakdown %}
+    <div class="breakdown">
+        <h2>What added to your score</h2>
+        <ul>
+            {% for label, points in r.breakdown %}
+            <li><span>{{ label }}</span><span class="points">+{{ points }}</span></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="disclaimer">
+        <p><strong>Disclaimer:</strong> This is a student educational project. The score only counts general,
+        well-known risk factors &mdash; it cannot detect or diagnose cancer, and it does not replace a doctor.
+        Please consult a healthcare professional about any health concerns.</p>
+    </div>
+
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Start Over</a>
+</div>
+{% endblock %}

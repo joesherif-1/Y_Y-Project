@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="brand">
+            <span class="brand-mark">+</span>
+            <span>{{ app_name }} <span class="brand-sub">Student Health Project</span></span>
+        </header>
+        {% block content %}{% endblock %}
+        <footer class="footer">
+            <p>Educational project &mdash; this tool cannot diagnose cancer. Always talk to a doctor about health concerns.</p>
+            <p>Made with love in Saudi Arabia 🇸🇦 by Younus Hassen and Yousef Sherif</p>
+        </footer>
+    </div>
+</body>
+</html>

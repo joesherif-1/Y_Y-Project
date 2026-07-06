@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Questionnaire - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="question-screen">
+    <div class="progress-bar"><div class="progress" id="progress"></div></div>
+    <p class="progress-text" id="progress-text">Section 1 of 7</p>
+
+    <form method="post" action="{{ url_for('result') }}" id="quiz-form">
+
+        <section class="step" data-step="0">
+            <h2>About you</h2>
+            <label class="field">
+                <span>How old are you?</span>
+                <input type="number" name="age" min="1" max="120" required placeholder="e.g. 45">
+            </label>
+            <label class="field">
+                <span>What is your sex?</span>
+                <select name="sex" required>
+                    <option value="" disabled selected>Choose one</option>
+                    <option value="female">Female</option>
+                    <option value="male">Male</option>
+                    <option value="unspecified">Prefer not to say</option>
+                </select>
+            </label>
+        </section>
+
+        <section class="step" data-step="1" hidden>
+            <h2>Medical history</h2>
+            <p class="field-label">Have you ever been diagnosed with cancer before?</p>
+            <div class="options">
+                <label class="option"><input type="radio" name="prev_cancer" value="yes" required><span>Yes</span></label>
+                <label class="option"><input type="radio" name="prev_cancer" value="no"><span>No</span></label>
+                <label class="option"><input type="radio" name="prev_cancer" value="unsure"><span>Not sure</span></label>
+            </div>
+            <p class="unsure-note" hidden>No problem — many people don't know their full medical history.
+            To be safe, we'll add a middle score for this question to account for the worst case.</p>
+            <p class="field-label">Do you have a long-term medical condition (like diabetes, hepatitis, or bowel disease)?</p>
+            <div class="options">
+                <label class="option"><input type="radio" name="chronic" value="yes" required><span>Yes</span></label>
+                <label class="option"><input type="radio" name="chronic" value="no"><span>No</span></label>
+                <label class="option"><input type="radio" name="chronic" value="unsure"><span>Not sure</span></label>
+            </div>
+            <p class="unsure-note" hidden>No problem — we'll add a middle score for this question to account for the worst case.</p>
+        </section>
+
+        <section class="step" data-step="2" hidden>
+            <h2>Family history</h2>
+            <p class="field-label">Has a close family member (parent, brother, sister, or child) had cancer?</p>
+            <div class="options">
+                <label class="option"><input type="radio" name="family_cancer" value="yes" required><span>Yes</span></label>
+                <label class="option"><input type="radio" name="family_cancer" value="no"><span>No</span></label>
+                <label class="option"><input type="radio" name="family_cancer" value="unsure"><span>Not sure</span></label>
+            </div>
+            <p class="unsure-note" hidden>No problem — we'll add a middle score for this question to account for the worst case.</p>
+            <label class="field">
+                <span>If yes, which family member and what type of cancer? (optional)</span>
+                <input type="text" name="family_detail" placeholder="e.g. grandfather, lung cancer">
+            </label>
+        </section>
+
+        <section class="step" data-step="3" hidden>
+            <h2>Smoking and alcohol</h2>
+            <p class="field-label">Do you smoke?</p>
+            <div class="options">
+                <label class="option"><input type="radio" name="smoking" value="never" required><span>Never smoked</span></label>
+                <label class="option"><input type="radio" name="smoking" value="former"><span>Used to, but quit</span></label>
+                <label class="option"><input type="radio" name="smoking" value="current"><span>Yes, currently</span></label>
+            </div>
+            <p class="field-label">Do you drink alcohol?</p>
+            <div class="options">
+                <label class="option"><input type="radio" name="alcohol" value="none" required><span>No</span></label>
+                <label class="option"><input type="radio" name="alcohol" value="occasional"><span>Occasionally</span></label>
+                <label class="option"><input type="radio" name="alcohol" value="regular"><span>Regularly</span></label>
+            </div>
+        </section>
+
+        <section class="step" data-step="4" hidden>
+            <h2>Symptoms</h2>
+            <p class="field-label">Have you noticed any of these recently? Tick all that apply, or none.</p>
+            <div class="options checklist">
+                {% for key, (label, points) in symptoms.items() %}
+                <label class="option"><input type="checkbox" name="symptoms" value="{{ key }}"><span>{{ label }}</span></label>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="step" data-step="5" hidden>
+            <h2>Duration of symptoms</h2>
+            <p class="field-label">If you ticked any symptoms, how long have they lasted?</p>
+            <div class="options">
+                <label class="option"><input type="radio" name="duration" value="none" required><span>I have no symptoms</span></label>
+                <label class="option"><input type="radio" name="duration" value="under2"><span>Less than 2 weeks</span></label>
+                <label class="option"><input type="radio" name="duration" value="w2to4"><span>2 to 4 weeks</span></label>
+                <label class="option"><input type="radio" name="duration" value="m1to3"><span>1 to 3 months</span></label>
+                <label class="option"><input type="radio" name="duration" value="over3"><span>More than 3 months</span></label>
+            </div>
+        </section>
+
+        <section class="step" data-step="6" hidden>
+            <h2>Anything else?</h2>
+            <label class="field">
+                <span>Any other health information you think is relevant (optional)</span>
+                <textarea name="other" rows="4" placeholder="e.g. medications, past surgeries, exposure to chemicals..."></textarea>
+            </label>
+        </section>
+
+        <div class="nav-buttons">
+            <button type="button" class="btn btn-secondary" id="back-btn" hidden>Back</button>
+            <button type="button" class="btn btn-primary" id="next-btn">Next</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn" hidden>See My Score</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const steps = document.querySelectorAll('.step');
+    const backBtn = document.getElementById('back-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const progress = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    let current = 0;
+
+    function show(step) {
+        current = step;
+        steps.forEach((s, i) => s.hidden = i !== step);
+        backBtn.hidden = step === 0;
+        nextBtn.hidden = step === steps.length - 1;
+        submitBtn.hidden = step !== steps.length - 1;
+        progress.style.width = ((step + 1) / steps.length * 100) + '%';
+        progressText.textContent = 'Section ' + (step + 1) + ' of ' + steps.length;
+        window.scrollTo(0, 0);
+    }
+
+    function stepIsValid() {
+        const fields = steps[current].querySelectorAll('input, select, textarea');
+        for (const f of fields) {
+            if (!f.reportValidity()) return false;
+        }
+        return true;
+    }
+
+    nextBtn.addEventListener('click', () => { if (stepIsValid()) show(current + 1); });
+    backBtn.addEventListener('click', () => show(current - 1));
+    show(0);
+
+    // Show the "middle score" notice when an "unsure" answer is picked.
+    document.querySelectorAll('input[type=radio]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const note = radio.closest('.options').nextElementSibling;
+            if (note && note.classList.contains('unsure-note')) {
+                note.hidden = radio.value !== 'unsure';
+            }
+        });
+    });
+</script>
+{% endblock %}

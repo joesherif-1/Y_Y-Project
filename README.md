@@ -1,55 +1,57 @@
-# Cancer Assessment Website
+# Cancer Risk-Factor Checker
 
-A Python App, or HTML website used to detect cancer. The goal of the project is to help people upload pictures of their hands, and answer a questionnare, Based on the given data it gives an inference of whether or not you have the likely chance of cancer with a ML model.
+A student educational website built with Python (Flask). The user takes a photo of
+their hand as a check-in step, then answers a questionnaire about known cancer risk
+factors. The site calculates a **risk-factor score** and explains what contributed to it.
 
-## Features for Prototype 0.1
+> **Important:** This tool cannot detect or diagnose cancer. The hand photo is never
+> uploaded or analyzed — it stays on the user's device. The score only counts general,
+> well-known risk factors, and the site always advises talking to a real doctor.
 
-- Start screen with customizable introduction text
-- 20-question assessment with progress tracking
-- Yes/No answer format for each question
-- Results page showing percentage risk
-- Modern, responsive UI with gradient styling
+## How it works
 
-## Local Setup Instructions
+1. **Home page** — take/choose a hand photo (client-side only) to unlock the questionnaire.
+2. **Questionnaire** — 7 sections: age & sex, medical history, family history of cancer,
+   smoking & alcohol, symptoms, duration of symptoms, and other health information.
+3. **Results** — each risk factor adds weighted points (e.g. current smoking +4,
+   family history +3, unexplained weight loss +3). The total maps to a
+   Low / Moderate / Elevated level, with a breakdown of every point and a disclaimer.
+   Serious "red flag" symptoms lasting 2+ weeks always trigger a "see a doctor soon" note.
+   History questions offer a "Not sure" answer that adds a middle score, so an unknown
+   history is treated more carefully than a clear "no" (worst-case thinking).
+   The results page also explains that the hand photo added +0 points and what doctors
+   can genuinely observe from hands in a real exam.
 
-1. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Local setup
 
-3. **Run the application:**
-   ```bash
-   python app.py
-   ```
+```bash
+pip install -r requirements.txt
+python app.py
+```
 
-4. **Access the website:**
-   - Open your browser and navigate to `http://127.0.0.1:5000`
+Then open `http://127.0.0.1:5000` in your browser.
 
-## Deployment Instructions
+## Project structure
 
-### Option 1: Deploy to Render
+```
+app.py                    # Flask routes + scoring logic
+templates/                # HTML pages (Flask requires this folder name)
+  base.html               # shared layout
+  index.html              # home + hand photo step
+  questionnaire.html      # 7-section multi-step form
+  result.html             # score, level, breakdown
+static/style.css          # styling (Flask requires this folder name)
+Procfile                  # for deploying on Render
+```
 
-1. **Create a GitHub repository** and push your code:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/your-username/your-repo.git
-   git push -u origin main
-   ```
+## Deploy to Render
 
-2. **Sign up for Render** at [render.com](https://render.com)
+1. Push the code to a GitHub repository.
+2. On [render.com](https://render.com), create a new **Web Service** and connect the repo.
+   Render auto-detects the Python/Flask app and uses the `Procfile`.
+3. Set an environment variable `SECRET_KEY` (generate one with
+   `python -c 'import secrets; print(secrets.token_hex(32))'`).
+4. Deploy — you'll get a URL like `https://your-app.onrender.com`.
 
-3. **Create a new Web Service:**
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Render will automatically detect it's a Python/Flask app
-   - Set the following environment variables:
-     - `SECRET_KEY`: Generate a random secret key (use: `python -c 'import secrets; print(secrets.token_hex(32))'`)
-   - Click "Create Web Service"
-
-4. **Your app will be deployed** and you'll get a URL like `https://your-app.onrender.com`
-
-Made with Love in Saudi Arabia 🇸🇦
+Made with love in Saudi Arabia 🇸🇦
 By Younus Hassen and Yousef Sherif
