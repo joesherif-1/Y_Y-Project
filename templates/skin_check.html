@@ -99,6 +99,7 @@
                 }
             } catch (e) { /* metrics are optional */ }
             statusBox.textContent = info;
+            statusBox.classList.add('ok');
             photoBox.hidden = false;
         } catch (e) {
             statusBox.hidden = true;

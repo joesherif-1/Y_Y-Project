@@ -19,6 +19,8 @@ python3 -m venv "$WORK/venv"
 # tensorflow-decision-forests is only needed for tree models; skip it if unavailable.
 "$WORK/venv/bin/pip" -q install tensorflowjs || \
     "$WORK/venv/bin/pip" -q install tensorflowjs --no-deps tensorflow tf-keras tensorflow-hub packaging six
+# Fix a protobuf version clash between the converter's own dependencies.
+"$WORK/venv/bin/pip" -q install -U "protobuf>=6.31"
 
 echo "Converting..."
 mkdir -p "$REPO_DIR/static/model"

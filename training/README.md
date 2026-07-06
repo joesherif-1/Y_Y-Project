@@ -5,16 +5,16 @@ and takes about 30 minutes total. You only need to do this once.
 
 ## What you need
 - A Google account (for [colab.google](https://colab.google))
-- A free [Kaggle](https://www.kaggle.com) account (the HAM10000 dataset is hosted there)
+- Usually nothing else — the HAM10000 dataset downloads from Kaggle without a login.
+  (If the download cell ever does ask you to log in, a free Kaggle account fixes it.)
 
 ## Steps
 
 1. Go to [colab.google](https://colab.google) → **Open Colab** → **Upload** →
    choose `train_skin_model.ipynb` from this folder.
 2. In Colab's menu: **Runtime → Change runtime type → T4 GPU** → Save.
-3. **Runtime → Run all.** The Kaggle download cell will ask you to log in — follow the
-   link it prints and paste the token. Then wait (~20–30 min). The notebook installs
-   nothing, so there are no library-version surprises.
+3. **Runtime → Run all**, then wait (~20–30 min). The notebook installs nothing, so
+   there are no library-version surprises.
 4. When it finishes, your browser downloads **`skin_model.zip`**. Write down the
    accuracy, sensitivity and specificity it printed — you'll want them for your report.
 5. **Convert the model for the website** (this is the version-sensitive step, kept

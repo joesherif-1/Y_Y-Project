@@ -1,0 +1,8 @@
+{
+  "test_accuracy": 0.8397,
+  "test_auc": 0.8726,
+  "sensitivity": 0.6689,
+  "specificity": 0.881,
+  "test_images": 1503,
+  "trained_on": "HAM10000, 2026-07-06"
+}
