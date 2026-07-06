@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}AI Skin Check - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="skin-screen">
+    <h1>AI Skin Check <span class="tag-experiment">ML experiment</span></h1>
+    <p class="start-text">
+        Take a close-up photo of <strong>one mole or skin spot</strong> and a neural network
+        will compare it with thousands of real dermatology photos it was trained on.
+    </p>
+
+    <div class="hand-card">
+        <p><strong>Why a mole and not your whole hand?</strong> Skin spots are the one thing
+        a photo can genuinely show, and scientists have published big public datasets of them.
+        Our model was trained on the HAM10000 dermatology dataset (10,015 images) &mdash; so this
+        is a real machine-learning experiment, with its limits stated honestly below.</p>
+    </div>
+
+    <div id="model-status" class="alert" hidden></div>
+
+    <div id="setup-box" class="disclaimer" hidden>
+        <p><strong>Model not installed yet.</strong> The AI model files haven't been added to the
+        website. Run the training notebook in <code>training/</code> on Google Colab, then place
+        the exported files in <code>static/model/</code>. The page will start working automatically.</p>
+    </div>
+
+    <div class="photo-step" id="photo-box" hidden>
+        <h2>Photo of one skin spot</h2>
+        <p class="hint">Get close, use good lighting, and keep the spot in the middle of the frame.
+        The photo is analyzed on your device and never uploaded.</p>
+        <label class="photo-label" for="skin-input">
+            <span id="skin-prompt">📷 Tap to take or choose a photo</span>
+        </label>
+        <input type="file" id="skin-input" accept="image/*" capture="environment" hidden>
+        <img id="skin-preview" class="photo-preview" alt="Skin spot photo" hidden>
+        <button id="analyze-btn" class="btn btn-primary" style="margin-top:14px" hidden>Analyze</button>
+    </div>
+
+    <div id="result-box" hidden>
+        <h2 style="text-align:center; margin-top:20px">Model output</h2>
+        <div class="prob-row">
+            <span class="prob-label">Looks benign-like</span>
+            <div class="prob-track"><div id="bar-benign" class="prob-fill benign"></div></div>
+            <span id="pct-benign" class="prob-pct"></span>
+        </div>
+        <div class="prob-row">
+            <span class="prob-label">Looks suspicious-like</span>
+            <div class="prob-track"><div id="bar-mal" class="prob-fill mal"></div></div>
+            <span id="pct-mal" class="prob-pct"></span>
+        </div>
+        <p class="result-text" id="result-advice" style="margin-top:14px"></p>
+        <div class="disclaimer">
+            <p><strong>What this really means:</strong> the model is saying which group of its
+            training photos your photo looks more similar to &mdash; nothing more. It has never seen
+            you, cannot feel or measure the spot, and is wrong on a known share of test images
+            (shown in the model info above). A dermatologist can do what no photo can. If a spot is
+            new, growing, bleeding, or changing, get it checked regardless of what this page says.</p>
+        </div>
+    </div>
+
+    <div class="hand-card">
+        <h2>What doctors look for (the ABCDE rule)</h2>
+        <p><strong>A</strong>symmetry &middot; <strong>B</strong>order irregularity &middot;
+        <strong>C</strong>olor variation &middot; <strong>D</strong>iameter over 6&nbsp;mm &middot;
+        <strong>E</strong>volving (changing over time). Any of these is a good reason to see a
+        dermatologist &mdash; and "evolving" is something only you can notice, not an AI.</p>
+    </div>
+
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to home</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+<script>
+    const statusBox = document.getElementById('model-status');
+    const setupBox = document.getElementById('setup-box');
+    const photoBox = document.getElementById('photo-box');
+    const input = document.getElementById('skin-input');
+    const preview = document.getElementById('skin-preview');
+    const prompt = document.getElementById('skin-prompt');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const resultBox = document.getElementById('result-box');
+    let model = null;
+
+    async function init() {
+        statusBox.hidden = false;
+        statusBox.textContent = 'Loading the AI model...';
+        try {
+            model = await tf.loadLayersModel('/static/model/model.json');
+            tf.tidy(() => model.predict(tf.zeros([1, 224, 224, 3])));  // warm-up
+            let info = 'AI model loaded.';
+            try {
+                const res = await fetch('/static/model/metrics.json');
+                if (res.ok) {
+                    const m = await res.json();
+                    info = 'AI model loaded — it scored ' + Math.round(m.test_accuracy * 100) +
+                           '% accuracy on ' + m.test_images + ' unseen test images (trained ' +
+                           m.trained_on + ').';
+                }
+            } catch (e) { /* metrics are optional */ }
+            statusBox.textContent = info;
+            photoBox.hidden = false;
+        } catch (e) {
+            statusBox.hidden = true;
+            setupBox.hidden = false;
+        }
+    }
+
+    input.addEventListener('change', () => {
+        const file = input.files[0];
+        if (!file) return;
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+        prompt.textContent = '📷 Photo added! Tap to retake';
+        analyzeBtn.hidden = false;
+        resultBox.hidden = true;
+    });
+
+    analyzeBtn.addEventListener('click', async () => {
+        if (!model || preview.hidden) return;
+        analyzeBtn.textContent = 'Analyzing...';
+        // The model starts with a Rescaling layer, so we feed raw 0-255 pixels.
+        const t = tf.tidy(() =>
+            tf.image.resizeBilinear(tf.browser.fromPixels(preview), [224, 224])
+                .toFloat().expandDims(0));
+        const out = model.predict(t);
+        const malignant = (await out.data())[0];
+        t.dispose(); out.dispose();
+
+        const pctMal = Math.round(malignant * 100);
+        const pctBen = 100 - pctMal;
+        document.getElementById('bar-benign').style.width = pctBen + '%';
+        document.getElementById('bar-mal').style.width = pctMal + '%';
+        document.getElementById('pct-benign').textContent = pctBen + '%';
+        document.getElementById('pct-mal').textContent = pctMal + '%';
+        const advice = document.getElementById('result-advice');
+        if (pctMal >= 50) {
+            advice.innerHTML = 'Your photo looks more similar to the <strong>suspicious</strong> ' +
+                'images in the training data. That is a good reason to show this spot to a ' +
+                'dermatologist — not a diagnosis.';
+        } else {
+            advice.innerHTML = 'Your photo looks more similar to the <strong>benign</strong> ' +
+                'images in the training data. Keep an eye on the spot anyway, and see a doctor ' +
+                'if it changes.';
+        }
+        resultBox.hidden = false;
+        analyzeBtn.textContent = 'Analyze';
+    });
+
+    init();
+</script>
+{% endblock %}

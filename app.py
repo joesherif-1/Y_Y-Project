@@ -134,6 +134,11 @@ def result():
     return render_template("result.html", app_name=APP_NAME, r=score_assessment(request.form))
 
 
+@app.route("/skin-check")
+def skin_check():
+    return render_template("skin_check.html", app_name=APP_NAME)
+
+
 @app.route("/health")
 def health():
     return "OK"

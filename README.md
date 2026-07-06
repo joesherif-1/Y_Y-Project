@@ -22,6 +22,19 @@ factors. The site calculates a **risk-factor score** and explains what contribut
    The results page also explains that the hand photo added +0 points and what doctors
    can genuinely observe from hands in a real exam.
 
+## Version 2: AI Skin Check (ML experiment)
+
+The `/skin-check` page runs a real neural network **in the browser** (TensorFlow.js), so
+photos never leave the user's device. The model is a MobileNetV2 fine-tuned on the public
+HAM10000 dermatology dataset (10,015 images) to separate benign-looking from
+suspicious-looking skin spots.
+
+- Train it yourself on Google Colab: see [`training/README.md`](training/README.md)
+  (about 30 minutes, free GPU).
+- Drop the exported files into `static/model/` and the page starts working automatically,
+  displaying the model's real test accuracy.
+- Until then, the page shows a "model not installed yet" notice.
+
 ## Local setup
 
 ```bash
