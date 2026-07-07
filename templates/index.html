@@ -22,9 +22,9 @@
 
         <canvas id="hand-canvas" hidden></canvas>
         <p class="hint" id="tap-hint" hidden>
-            <strong>Optional AI spot check:</strong> tap any mole or dark spot on your photo and our
-            neural network (the same one behind the AI Skin Check) will zoom in and analyze
-            that exact spot.
+            <strong>AI spot check:</strong> tap any mole or dark spot on your photo and our neural
+            network will zoom in and analyze that exact spot. Its finding is included in your
+            final score.
         </p>
 
         <div id="spot-panel" hidden>
@@ -44,10 +44,11 @@
                 </div>
                 <p class="hint" id="spot-advice" style="text-align:left"></p>
                 <p class="hint" style="text-align:left">
-                    The AI only judges the small square you tapped, and hand photos are lower quality
-                    than the medical images it trained on. For a better check, take a close-up of just
-                    that spot on the <a href="{{ url_for('skin_check') }}">AI Skin Check</a> page &mdash;
-                    and remember: this is an experiment, not a diagnosis.
+                    This finding will be added to your questionnaire score. The AI only judges the
+                    small square you tapped, and hand photos are lower quality than the medical
+                    images it trained on &mdash; for a better photo check, use a close-up of just that
+                    spot on the <a href="{{ url_for('skin_check') }}">AI Skin Check</a> page. This is
+                    an experiment, not a diagnosis.
                 </p>
             </div>
         </div>
@@ -57,8 +58,6 @@
         Start Questionnaire
     </a>
     <p class="hint" id="start-hint">Add a photo above to unlock the questionnaire.</p>
-
-    <a class="link-secondary" href="{{ url_for('skin_check') }}">🔬 Try our AI Skin Check (version 2 experiment)</a>
 
     <div class="disclaimer">
         <p><strong>Important:</strong> This tool is a student project for learning about
@@ -87,6 +86,9 @@
     let cropCanvas = null;     // 224x224 crop fed to the model
     let modelPromise = null;   // model loads lazily, on the first tap
 
+    // A fresh visit starts a fresh assessment - forget any earlier AI result.
+    sessionStorage.removeItem('spotCheckPct');
+
     input.addEventListener('change', () => {
         const file = input.files[0];
         if (!file) return;
@@ -99,6 +101,7 @@
             canvas.hidden = false;
             tapHint.hidden = false;
             spotPanel.hidden = true;
+            sessionStorage.removeItem('spotCheckPct');  // new photo, new check
         };
         img.src = URL.createObjectURL(file);
         prompt.textContent = '📷 Photo added! Tap to retake';
@@ -152,6 +155,7 @@
 
             const pctMal = Math.round(malignant * 100);
             const pctBen = 100 - pctMal;
+            sessionStorage.setItem('spotCheckPct', pctMal);  // carried into the score
             document.getElementById('bar-benign').style.width = pctBen + '%';
             document.getElementById('bar-mal').style.width = pctMal + '%';
             document.getElementById('pct-benign').textContent = pctBen + '%';

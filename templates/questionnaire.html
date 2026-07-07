@@ -8,6 +8,7 @@
     <p class="progress-text" id="progress-text">Section 1 of 7</p>
 
     <form method="post" action="{{ url_for('result') }}" id="quiz-form">
+        <input type="hidden" name="ai_spot" id="ai-spot">
 
         <section class="step" data-step="0">
             <h2>About you</h2>
@@ -145,6 +146,10 @@
     nextBtn.addEventListener('click', () => { if (stepIsValid()) show(current + 1); });
     backBtn.addEventListener('click', () => show(current - 1));
     show(0);
+
+    // Bring along the AI spot-check result from the hand photo, if there was one.
+    const aiSpot = sessionStorage.getItem('spotCheckPct');
+    if (aiSpot !== null) document.getElementById('ai-spot').value = aiSpot;
 
     // Show the "middle score" notice when an "unsure" answer is picked.
     document.querySelectorAll('input[type=radio]').forEach(radio => {

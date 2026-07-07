@@ -34,16 +34,32 @@
     </div>
     {% endif %}
 
+    {% if r.ai %}
+    <div class="hand-card">
+        <h2>Your AI spot check</h2>
+        <p>The spot you tapped on your hand photo scored <strong>{{ r.ai.pct }}% suspicious-like</strong>
+        ({{ 100 - r.ai.pct }}% benign-like) when compared with the model's dermatology training images.
+        {% if r.ai.pct >= 70 %}That added <strong>+3 points</strong> to your score, and that spot is
+        worth showing to a dermatologist.{% elif r.ai.pct >= 50 %}That added <strong>+2 points</strong>
+        to your score, and that spot is worth showing to a dermatologist.{% else %}That looks
+        reassuring, so it added <strong>+0 points</strong> — keep an eye on the spot and get it
+        checked if it changes.{% endif %}</p>
+        <p>Remember the AI only judged the one small square you tapped, from a phone photo — it is
+        an experiment, not an examination. A doctor can check your whole skin properly.</p>
+    </div>
+    {% else %}
     <div class="hand-card">
         <h2>About your hand photo</h2>
-        <p>Your hand photo added <strong>+0 points</strong> to your score. That is on purpose:
-        a photo of a hand cannot show whether someone has cancer, so this tool does not
-        analyze it or compare it with anyone else's photos.</p>
+        <p>Your hand photo added <strong>+0 points</strong> to your score, because you didn't run
+        the AI spot check — and a photo alone cannot show whether someone has cancer. If you have
+        a mole or spot you're curious about, go back and tap it on your photo, or use the close-up
+        checker on the AI Skin Check page.</p>
         <p>In a real, in-person exam a doctor <em>can</em> sometimes notice general health clues
         on the hands — such as changes in fingernail shape (called "clubbing"), very pale nails
         or palms, or a yellow tint to the skin. Only a healthcare professional can judge signs
         like these, which is one more reason a check-up beats any website.</p>
     </div>
+    {% endif %}
 
     {% if r.breakdown %}
     <div class="breakdown">

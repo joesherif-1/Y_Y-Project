@@ -35,7 +35,8 @@ DURATION_POINTS = {
 
 # Highest score possible: age(4) + previous cancer(4) + chronic condition(2)
 # + family history(3) + smoking(4) + alcohol(2) + all symptoms(21) + duration(3)
-MAX_SCORE = 43
+# + AI spot check(3)
+MAX_SCORE = 46
 
 
 def score_assessment(form):
@@ -96,6 +97,23 @@ def score_assessment(form):
     if chosen:
         add("How long the symptoms have lasted", DURATION_POINTS.get(duration, 0))
 
+    # AI spot check from the hand photo (percentage 0-100, set by the browser).
+    # It only ever sees one cropped spot, so it gets modest weight - at most the
+    # same points as a family history of cancer.
+    ai = None
+    ai_raw = form.get("ai_spot", "")
+    if ai_raw:
+        try:
+            ai_pct = max(0, min(100, int(float(ai_raw))))
+        except ValueError:
+            ai_pct = None
+        if ai_pct is not None:
+            ai = {"pct": ai_pct}
+            if ai_pct >= 70:
+                add("AI spot check: strongly similar to suspicious training images", 3)
+            elif ai_pct >= 50:
+                add("AI spot check: similar to suspicious training images", 2)
+
     if total >= 16:
         level, level_class = "Elevated", "high"
     elif total >= 8:
@@ -114,6 +132,7 @@ def score_assessment(form):
         "level_class": level_class,
         "breakdown": breakdown,
         "red_flag": red_flag,
+        "ai": ai,
     }
 
 

@@ -19,8 +19,9 @@ factors. The site calculates a **risk-factor score** and explains what contribut
    Serious "red flag" symptoms lasting 2+ weeks always trigger a "see a doctor soon" note.
    History questions offer a "Not sure" answer that adds a middle score, so an unknown
    history is treated more carefully than a clear "no" (worst-case thinking).
-   The results page also explains that the hand photo added +0 points and what doctors
-   can genuinely observe from hands in a real exam.
+   If the user ran the AI spot check on their hand photo, its finding is scored too
+   (suspicious-like ≥70% adds +3, 50–69% adds +2, benign-like adds 0) and explained
+   on the results page with honest limits.
 
 ## Version 2: AI Skin Check (ML experiment)
 
