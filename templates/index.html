@@ -11,9 +11,10 @@
     </p>
 
     <div class="photo-step">
-        <h2>Step 1: Take a photo of your hand</h2>
+        <h2>Step 1: Take a photo of your hand (optional)</h2>
         <p class="hint">
-            The photo stays on your device &mdash; it is never uploaded.
+            The photo stays on your device &mdash; it is never uploaded. No visible spots to
+            check? You can skip straight to the questionnaire below.
         </p>
         <label class="photo-label" for="photo-input">
             <span id="photo-prompt">📷 Tap to take or choose a photo</span>
@@ -54,7 +55,7 @@
         </div>
     </div>
 
-    <div class="photo-step" id="self-check" hidden>
+    <div class="photo-step" id="self-check">
         <h2>Step 2: Quick hand self-check</h2>
         <p class="hint">
             The AI only judges the spot you tap &mdash; these signs need <strong>human eyes</strong>,
@@ -74,10 +75,11 @@
         </div>
     </div>
 
-    <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary disabled" aria-disabled="true">
+    <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary">
         Start Questionnaire
     </a>
-    <p class="hint" id="start-hint">Add a photo above to unlock the questionnaire.</p>
+    <p class="hint" id="start-hint">The photo and AI spot check are optional &mdash; they add to
+    your score if you use them, but the questionnaire works without them.</p>
 
     <div class="disclaimer">
         <p><strong>Important:</strong> This tool is a student project for learning about
@@ -99,9 +101,6 @@
     const cropPreview = document.getElementById('crop-preview');
     const analyzeBtn = document.getElementById('spot-analyze');
     const spotResult = document.getElementById('spot-result');
-    const startBtn = document.getElementById('start-btn');
-    const startHint = document.getElementById('start-hint');
-
     let handImage = null;
     let cropCanvas = null;     // 224x224 crop fed to the model
     let modelPromise = null;   // model loads lazily, on the first tap
@@ -134,14 +133,10 @@
             canvas.hidden = false;
             tapHint.hidden = false;
             spotPanel.hidden = true;
-            document.getElementById('self-check').hidden = false;
             sessionStorage.removeItem('spotCheckPct');  // new photo, new check
         };
         img.src = URL.createObjectURL(file);
         prompt.textContent = '📷 Photo added! Tap to retake';
-        startBtn.classList.remove('disabled');
-        startBtn.removeAttribute('aria-disabled');
-        startHint.textContent = 'Great, you are ready to start.';
     });
 
     canvas.addEventListener('click', (e) => {
@@ -211,8 +206,5 @@
         analyzeBtn.textContent = 'Analyze this spot';
     });
 
-    startBtn.addEventListener('click', (e) => {
-        if (startBtn.classList.contains('disabled')) e.preventDefault();
-    });
 </script>
 {% endblock %}
