@@ -4,63 +4,83 @@
 
 {% block content %}
 <div class="start-screen">
-    <h1>Check your risk factors</h1>
-    <p class="start-text">
-        Answer a short questionnaire about your health and lifestyle, and get an
-        educational score showing how many known cancer <strong>risk factors</strong> apply to you.
-    </p>
+    <button class="info-btn" type="button" aria-label="What are these steps?">i</button>
 
-    <div class="photo-step">
-        <h2>Step 1: Take a photo of your hand (optional)</h2>
-        <p class="hint">
-            The photo stays on your device &mdash; it is never uploaded. No visible spots to
-            check? You can skip straight to the questionnaire below.
-        </p>
-        <label class="photo-label" for="photo-input">
-            <span id="photo-prompt">📷 Tap to take or choose a photo</span>
-        </label>
-        <input type="file" id="photo-input" accept="image/*" capture="user" hidden>
-
-        <canvas id="hand-canvas" hidden></canvas>
-        <p class="hint" id="tap-hint" hidden>
-            <strong>AI spot check:</strong> tap any mole or dark spot on your photo and our neural
-            network will zoom in and analyze that exact spot. Its finding is included in your
-            final score.
-        </p>
-
-        <div id="spot-panel" hidden>
-            <p class="hint" id="spot-status">Close-up of the spot you tapped:</p>
-            <img id="crop-preview" class="crop-preview" alt="Zoomed crop of the tapped spot">
-            <button type="button" id="spot-analyze" class="btn btn-primary">Analyze this spot</button>
-            <div id="spot-result" hidden>
-                <div class="prob-row">
-                    <span class="prob-label">Looks benign-like</span>
-                    <div class="prob-track"><div id="bar-benign" class="prob-fill benign"></div></div>
-                    <span id="pct-benign" class="prob-pct"></span>
-                </div>
-                <div class="prob-row">
-                    <span class="prob-label">Looks suspicious-like</span>
-                    <div class="prob-track"><div id="bar-mal" class="prob-fill mal"></div></div>
-                    <span id="pct-mal" class="prob-pct"></span>
-                </div>
-                <p class="hint" id="spot-advice" style="text-align:left"></p>
-                <p class="hint" style="text-align:left">
-                    This finding will be added to your questionnaire score. The AI only judges the
-                    small square you tapped, and hand photos are lower quality than the medical
-                    images it trained on &mdash; for a better photo check, use a close-up of just that
-                    spot on the <a href="{{ url_for('skin_check') }}">AI Skin Check</a> page. This is
-                    an experiment, not a diagnosis.
-                </p>
-            </div>
+    <div class="info-overlay" hidden>
+        <div class="info-panel">
+            <button class="info-close" type="button" aria-label="Close">&times;</button>
+            <h2>What happens here?</h2>
+            <ol class="info-list">
+                <li><strong>Hand photo + AI spot check</strong> <span class="chip optional">Optional</span><br>
+                    Take a photo, tap a mole or spot, and our neural network compares that exact spot
+                    with dermatology images it trained on. Can add up to 3 points to your score.</li>
+                <li><strong>Quick hand self-check</strong> <span class="chip optional">Optional</span><br>
+                    Your own eyes check for pale, yellow, or shape changes the camera can't judge.
+                    Can add up to 8 points.</li>
+                <li><strong>Questionnaire</strong> <span class="chip required">Required</span><br>
+                    Seven short sections about you, your history, lifestyle, and symptoms &mdash;
+                    then your score and analysis.</li>
+            </ol>
+            <p class="hint">Nothing is uploaded &mdash; photos and answers stay on your device until
+            you submit the questionnaire, and photos never leave it at all.</p>
         </div>
     </div>
 
-    <div class="photo-step" id="self-check">
-        <h2>Step 2: Quick hand self-check</h2>
-        <p class="hint">
-            The AI only judges the spot you tap &mdash; these signs need <strong>human eyes</strong>,
-            because phone cameras distort colors and can't see 3D shapes. Look at your hands in
-            good, natural light and tick anything you notice. Your answers count toward your score.
+    <p class="progress-text" id="wiz-label">Step 1 of 3</p>
+
+    <section class="screen fade-step" data-screen="0">
+        <h1>Take a photo of your hand</h1>
+        <p class="start-text">
+            Snap a photo, then <strong>tap any mole or spot on it</strong> &mdash; our AI zooms in
+            and checks that exact spot against real dermatology images. It counts toward your final
+            score. <em>No spots to check? Just continue.</em>
+        </p>
+
+        <div class="photo-step">
+            <p class="hint">The photo stays on your device &mdash; it is never uploaded.</p>
+            <label class="photo-label" for="photo-input">
+                <span id="photo-prompt">📷 Tap to take or choose a photo</span>
+            </label>
+            <input type="file" id="photo-input" accept="image/*" capture="user" hidden>
+
+            <canvas id="hand-canvas" hidden></canvas>
+            <p class="hint" id="tap-hint" hidden>
+                <strong>AI spot check:</strong> tap any mole or dark spot on your photo.
+            </p>
+
+            <div id="spot-panel" hidden>
+                <p class="hint" id="spot-status">Close-up of the spot you tapped:</p>
+                <img id="crop-preview" class="crop-preview" alt="Zoomed crop of the tapped spot">
+                <button type="button" id="spot-analyze" class="btn btn-primary">Analyze this spot</button>
+                <div id="spot-result" hidden>
+                    <div class="prob-row">
+                        <span class="prob-label">Looks benign-like</span>
+                        <div class="prob-track"><div id="bar-benign" class="prob-fill benign"></div></div>
+                        <span id="pct-benign" class="prob-pct"></span>
+                    </div>
+                    <div class="prob-row">
+                        <span class="prob-label">Looks suspicious-like</span>
+                        <div class="prob-track"><div id="bar-mal" class="prob-fill mal"></div></div>
+                        <span id="pct-mal" class="prob-pct"></span>
+                    </div>
+                    <p class="hint" id="spot-advice" style="text-align:left"></p>
+                    <p class="hint" style="text-align:left">
+                        This finding will be added to your questionnaire score. The AI only judges
+                        the small square you tapped &mdash; an experiment, not a diagnosis. For a
+                        better photo check, use a close-up on the
+                        <a href="{{ url_for('skin_check') }}">AI Skin Check</a> page.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="screen fade-step" data-screen="1" hidden>
+        <h1>Quick hand self-check</h1>
+        <p class="start-text">
+            Some signs need <strong>human eyes</strong> &mdash; phone cameras distort colors and
+            can't see 3D shapes. Look at your hands in good, natural light and tick anything you
+            notice. Your answers count toward your score.
         </p>
         <div class="options checklist">
             <label class="option"><input type="checkbox" id="hand-pale">
@@ -73,24 +93,53 @@
                 <span><strong>Fingertips or nails changed shape</strong> &mdash; wider, rounder,
                 curving down over the tip &mdash; or swollen fingers</span></label>
         </div>
-    </div>
+    </section>
 
-    <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary">
-        Start Questionnaire
-    </a>
-    <p class="hint" id="start-hint">The photo and AI spot check are optional &mdash; they add to
-    your score if you use them, but the questionnaire works without them.</p>
+    <section class="screen fade-step" data-screen="2" hidden>
+        <h1>Ready for the questionnaire</h1>
+        <p class="start-text">
+            Seven short sections: about you, medical and family history, lifestyle, symptoms,
+            and how long they've lasted. It takes about two minutes, and you'll get your score
+            with a full breakdown at the end.
+        </p>
+        <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary">
+            Start Questionnaire
+        </a>
+        <div class="disclaimer">
+            <p><strong>Important:</strong> This tool is a student project for learning about
+            cancer risk factors. It cannot detect or diagnose cancer. The AI spot check compares
+            a photo to its training data &mdash; only a doctor can examine you. If you are worried
+            about your health, please talk to a doctor.</p>
+        </div>
+    </section>
 
-    <div class="disclaimer">
-        <p><strong>Important:</strong> This tool is a student project for learning about
-        cancer risk factors. It cannot detect or diagnose cancer. The AI spot check compares
-        a photo to its training data &mdash; only a doctor can examine you. If you are worried
-        about your health, please talk to a doctor.</p>
+    <div class="nav-buttons">
+        <button type="button" id="wiz-back" class="btn btn-secondary" hidden>Back</button>
+        <button type="button" id="wiz-next" class="btn btn-primary">Continue</button>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 <script>
+    // ----- Wizard: one screen at a time with fade transitions -----
+    const screens = [...document.querySelectorAll('.screen')];
+    const wizBack = document.getElementById('wiz-back');
+    const wizNext = document.getElementById('wiz-next');
+    const wizLabel = document.getElementById('wiz-label');
+    let screenNow = 0;
+
+    function goScreen(i) {
+        fadeSwap(screens[screenNow], screens[i]);
+        screenNow = i;
+        wizBack.hidden = i === 0;
+        wizNext.hidden = i === screens.length - 1;
+        wizLabel.textContent = 'Step ' + (i + 1) + ' of ' + screens.length;
+        window.scrollTo(0, 0);
+    }
+    wizNext.addEventListener('click', () => goScreen(screenNow + 1));
+    wizBack.addEventListener('click', () => goScreen(screenNow - 1));
+
+    // ----- Photo + AI spot check -----
     const input = document.getElementById('photo-input');
     const canvas = document.getElementById('hand-canvas');
     const ctx = canvas.getContext('2d');
@@ -101,6 +150,7 @@
     const cropPreview = document.getElementById('crop-preview');
     const analyzeBtn = document.getElementById('spot-analyze');
     const spotResult = document.getElementById('spot-result');
+
     let handImage = null;
     let cropCanvas = null;     // 224x224 crop fed to the model
     let modelPromise = null;   // model loads lazily, on the first tap
@@ -205,6 +255,5 @@
         }
         analyzeBtn.textContent = 'Analyze this spot';
     });
-
 </script>
 {% endblock %}

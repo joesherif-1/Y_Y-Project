@@ -13,7 +13,7 @@
         <input type="hidden" name="hand_yellow" id="hand-yellow">
         <input type="hidden" name="hand_clubbing" id="hand-clubbing">
 
-        <section class="step" data-step="0">
+        <section class="step fade-step" data-step="0">
             <h2>About you</h2>
             <label class="field">
                 <span>How old are you?</span>
@@ -30,7 +30,7 @@
             </label>
         </section>
 
-        <section class="step" data-step="1" hidden>
+        <section class="step fade-step" data-step="1" hidden>
             <h2>Medical history</h2>
             <p class="field-label">Have you ever been diagnosed with cancer before?</p>
             <div class="options">
@@ -49,7 +49,7 @@
             <p class="unsure-note" hidden>No problem — we'll add a middle score for this question to account for the worst case.</p>
         </section>
 
-        <section class="step" data-step="2" hidden>
+        <section class="step fade-step" data-step="2" hidden>
             <h2>Family history</h2>
             <p class="field-label">Has a close family member (parent, brother, sister, or child) had cancer?</p>
             <div class="options">
@@ -64,7 +64,7 @@
             </label>
         </section>
 
-        <section class="step" data-step="3" hidden>
+        <section class="step fade-step" data-step="3" hidden>
             <h2>Smoking and alcohol</h2>
             <p class="field-label">Do you smoke?</p>
             <div class="options">
@@ -80,7 +80,7 @@
             </div>
         </section>
 
-        <section class="step" data-step="4" hidden>
+        <section class="step fade-step" data-step="4" hidden>
             <h2>Symptoms</h2>
             <p class="field-label">Have you noticed any of these recently? Tick all that apply, or none.</p>
             <div class="options checklist">
@@ -90,7 +90,7 @@
             </div>
         </section>
 
-        <section class="step" data-step="5" hidden>
+        <section class="step fade-step" data-step="5" hidden>
             <h2>Duration of symptoms</h2>
             <p class="field-label">If you ticked any symptoms, how long have they lasted?</p>
             <div class="options">
@@ -102,7 +102,7 @@
             </div>
         </section>
 
-        <section class="step" data-step="6" hidden>
+        <section class="step fade-step" data-step="6" hidden>
             <h2>Anything else?</h2>
             <label class="field">
                 <span>Any other health information you think is relevant (optional)</span>
@@ -128,8 +128,12 @@
     let current = 0;
 
     function show(step) {
+        if (step === current) {
+            steps.forEach((s, i) => s.hidden = i !== step);
+        } else {
+            fadeSwap(steps[current], steps[step]);
+        }
         current = step;
-        steps.forEach((s, i) => s.hidden = i !== step);
         backBtn.hidden = step === 0;
         nextBtn.hidden = step === steps.length - 1;
         submitBtn.hidden = step !== steps.length - 1;

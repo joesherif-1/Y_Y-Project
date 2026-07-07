@@ -4,88 +4,122 @@
 
 {% block content %}
 <div class="result-screen">
-    <h1>Your Risk-Factor Score</h1>
 
-    <div class="result-card">
+    <div id="score-stage">
+        <p class="stage-title">Your risk-factor score</p>
         <div class="score-circle {{ r.level_class }}">
             <span class="score-number">{{ r.total }}</span>
             <span class="score-max">out of {{ r.max_score }}</span>
         </div>
         <div class="level-badge {{ r.level_class }}">{{ r.level }} risk-factor level</div>
-
-        {% if r.level_class == 'low' %}
-        <p class="result-text">Few known cancer risk factors apply to you right now. Keep up healthy habits,
-        and remember this score is not a medical test.</p>
-        {% elif r.level_class == 'medium' %}
-        <p class="result-text">Some known cancer risk factors apply to you. That does <strong>not</strong> mean you have
-        cancer &mdash; most people with risk factors never get it &mdash; but it is a good reason to mention these
-        things at your next doctor visit.</p>
-        {% else %}
-        <p class="result-text">Several known cancer risk factors apply to you. This is <strong>not</strong> a diagnosis,
-        but we recommend booking an appointment with a doctor to talk about your answers.</p>
-        {% endif %}
     </div>
 
-    {% if r.hand_flag %}
-    <div class="alert">
-        <p><strong>About your hand self-check:</strong> you noticed a yellow tint or a change in
-        your fingertip/nail shape. These aren't cancer tests, but they are signs doctors like to
-        check out soon — please book an appointment and mention exactly what you noticed.</p>
-    </div>
-    {% endif %}
+    <div id="result-detail" class="fade-step" hidden>
+        <div class="cards" id="cards">
+            <div class="cards-track">
 
-    {% if r.red_flag %}
-    <div class="alert">
-        <p><strong>Please note:</strong> you reported a symptom (like unexplained weight loss, a new lump, or unusual
-        bleeding) that has lasted 2 weeks or more. Doctors recommend getting symptoms like these checked soon,
-        whatever your score is.</p>
-    </div>
-    {% endif %}
+                <div class="flash-card">
+                    <h2>What your level means</h2>
+                    {% if r.level_class == 'low' %}
+                    <p>Few known cancer risk factors apply to you right now. Keep up the healthy
+                    habits &mdash; and remember this score is not a medical test.</p>
+                    {% elif r.level_class == 'medium' %}
+                    <p>Some known risk factors apply to you. That does <strong>not</strong> mean you
+                    have cancer &mdash; most people with risk factors never get it &mdash; but they're
+                    worth mentioning at your next doctor visit.</p>
+                    {% else %}
+                    <p>Several known risk factors apply to you. This is <strong>not</strong> a
+                    diagnosis &mdash; but booking a doctor's appointment to talk them through is a
+                    smart move.</p>
+                    {% endif %}
+                </div>
 
-    {% if r.ai %}
-    <div class="hand-card">
-        <h2>Your AI spot check</h2>
-        <p>The spot you tapped on your hand photo scored <strong>{{ r.ai.pct }}% suspicious-like</strong>
-        ({{ 100 - r.ai.pct }}% benign-like) when compared with the model's dermatology training images.
-        {% if r.ai.pct >= 70 %}That added <strong>+3 points</strong> to your score, and that spot is
-        worth showing to a dermatologist.{% elif r.ai.pct >= 50 %}That added <strong>+2 points</strong>
-        to your score, and that spot is worth showing to a dermatologist.{% else %}That looks
-        reassuring, so it added <strong>+0 points</strong> — keep an eye on the spot and get it
-        checked if it changes.{% endif %}</p>
-        <p>Remember the AI only judged the one small square you tapped, from a phone photo — it is
-        an experiment, not an examination. A doctor can check your whole skin properly.</p>
-    </div>
-    {% else %}
-    <div class="hand-card">
-        <h2>About your hand photo</h2>
-        <p>Your hand photo added <strong>+0 points</strong> to your score, because you didn't run
-        the AI spot check — and a photo alone cannot show whether someone has cancer. If you have
-        a mole or spot you're curious about, go back and tap it on your photo, or use the close-up
-        checker on the AI Skin Check page.</p>
-        <p>In a real, in-person exam a doctor <em>can</em> sometimes notice general health clues
-        on the hands — such as changes in fingernail shape (called "clubbing"), very pale nails
-        or palms, or a yellow tint to the skin. Only a healthcare professional can judge signs
-        like these, which is one more reason a check-up beats any website.</p>
-    </div>
-    {% endif %}
+                {% if r.hand_flag %}
+                <div class="flash-card alert-card">
+                    <h2>Your hand self-check</h2>
+                    <p>You noticed a <strong>yellow tint</strong> or a <strong>change in fingertip or
+                    nail shape</strong>. These aren't cancer tests, but doctors like to check them
+                    soon &mdash; book an appointment and describe exactly what you saw.</p>
+                </div>
+                {% endif %}
 
-    {% if r.breakdown %}
-    <div class="breakdown">
-        <h2>What added to your score</h2>
-        <ul>
-            {% for label, points in r.breakdown %}
-            <li><span>{{ label }}</span><span class="points">+{{ points }}</span></li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
+                {% if r.red_flag %}
+                <div class="flash-card alert-card">
+                    <h2>About your symptoms</h2>
+                    <p>A symptom like <strong>unexplained weight loss, a new lump, or unusual
+                    bleeding</strong> that lasts 2+ weeks deserves a doctor's visit soon &mdash;
+                    whatever your score says.</p>
+                </div>
+                {% endif %}
 
-    <div class="disclaimer">
-        <p><strong>Disclaimer:</strong> This is a student educational project. The score only counts general,
-        well-known risk factors &mdash; it cannot detect or diagnose cancer, and it does not replace a doctor.
-        Please consult a healthcare professional about any health concerns.</p>
-    </div>
+                {% if r.ai %}
+                <div class="flash-card">
+                    <h2>Your AI spot check</h2>
+                    <p>The spot you tapped scored <strong>{{ r.ai.pct }}% suspicious-like</strong>
+                    ({{ 100 - r.ai.pct }}% benign-like) against the model's dermatology training images.
+                    {% if r.ai.pct >= 70 %}It added <strong>+3 points</strong> &mdash; show that spot
+                    to a dermatologist.{% elif r.ai.pct >= 50 %}It added <strong>+2 points</strong>
+                    &mdash; show that spot to a dermatologist.{% else %}Reassuring, so it added
+                    <strong>+0 points</strong> &mdash; keep an eye on it.{% endif %}</p>
+                    <p class="card-note">One small crop from a phone photo &mdash; an experiment,
+                    not an examination.</p>
+                </div>
+                {% else %}
+                <div class="flash-card">
+                    <h2>About your hand photo</h2>
+                    <p>No AI spot check this time, so your photo added <strong>+0 points</strong> &mdash;
+                    a photo alone can't show whether someone has cancer. In person, doctors can spot
+                    clues like nail shape and color changes that no website can judge.</p>
+                </div>
+                {% endif %}
 
-    <a href="{{ url_for('index') }}" class="btn btn-primary">Start Over</a>
+                {% if r.breakdown %}
+                <div class="flash-card">
+                    <h2>What added points</h2>
+                    <ul class="breakdown-list">
+                        {% for label, points in r.breakdown %}
+                        <li><span>{{ label }}</span><span class="points">+{{ points }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="flash-card">
+                    <h2>What now?</h2>
+                    <p>{% if r.level_class == 'low' %}No action needed &mdash; stay curious about your
+                    health and re-check if anything changes.{% else %}Bring this list to a doctor and
+                    talk it through &mdash; that's what these scores are for.{% endif %}</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:12px">Start Over</a>
+                </div>
+
+            </div>
+            <div class="cards-nav">
+                <button type="button" class="cards-prev" aria-label="Previous card">&#8249;</button>
+                <div class="cards-dots"></div>
+                <button type="button" class="cards-next" aria-label="Next card">&#8250;</button>
+            </div>
+        </div>
+
+        <p class="disclaimer-line"><strong>Not a diagnosis:</strong> this student project counts
+        general risk factors and compares photos to training images &mdash; it cannot detect cancer.
+        Please talk to a healthcare professional about any concerns.</p>
+    </div>
 </div>
+
+<script>
+    const stage = document.getElementById('score-stage');
+    const detail = document.getElementById('result-detail');
+    const dockDelay = REDUCED_MOTION ? 0 : 1400;
+
+    setTimeout(() => {
+        stage.classList.add('docked');
+        detail.hidden = false;
+        if (!REDUCED_MOTION) {
+            detail.classList.add('is-fading');
+            void detail.offsetWidth;
+            detail.classList.remove('is-fading');
+        }
+        setupCarousel(document.getElementById('cards'));
+    }, dockDelay);
+</script>
 {% endblock %}
