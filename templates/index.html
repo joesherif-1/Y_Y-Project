@@ -54,6 +54,26 @@
         </div>
     </div>
 
+    <div class="photo-step" id="self-check" hidden>
+        <h2>Step 2: Quick hand self-check</h2>
+        <p class="hint">
+            The AI only judges the spot you tap &mdash; these signs need <strong>human eyes</strong>,
+            because phone cameras distort colors and can't see 3D shapes. Look at your hands in
+            good, natural light and tick anything you notice. Your answers count toward your score.
+        </p>
+        <div class="options checklist">
+            <label class="option"><input type="checkbox" id="hand-pale">
+                <span><strong>Unusually pale</strong> nails or palms, compared to your normal color
+                (a possible anemia clue)</span></label>
+            <label class="option"><input type="checkbox" id="hand-yellow">
+                <span>A <strong>yellowish tint</strong> to your skin or the whites of your eyes
+                (possible jaundice)</span></label>
+            <label class="option"><input type="checkbox" id="hand-clubbing">
+                <span><strong>Fingertips or nails changed shape</strong> &mdash; wider, rounder,
+                curving down over the tip &mdash; or swollen fingers</span></label>
+        </div>
+    </div>
+
     <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary disabled" aria-disabled="true">
         Start Questionnaire
     </a>
@@ -86,8 +106,21 @@
     let cropCanvas = null;     // 224x224 crop fed to the model
     let modelPromise = null;   // model loads lazily, on the first tap
 
-    // A fresh visit starts a fresh assessment - forget any earlier AI result.
+    // A fresh visit starts a fresh assessment - forget any earlier results.
     sessionStorage.removeItem('spotCheckPct');
+    sessionStorage.removeItem('handSigns');
+
+    // Save the self-check ticks so the questionnaire can carry them to the score.
+    const signBoxes = { pale: 'hand-pale', yellow: 'hand-yellow', clubbing: 'hand-clubbing' };
+    Object.values(signBoxes).forEach(id => {
+        document.getElementById(id).addEventListener('change', () => {
+            const signs = {};
+            for (const [key, boxId] of Object.entries(signBoxes)) {
+                signs[key] = document.getElementById(boxId).checked;
+            }
+            sessionStorage.setItem('handSigns', JSON.stringify(signs));
+        });
+    });
 
     input.addEventListener('change', () => {
         const file = input.files[0];
@@ -101,6 +134,7 @@
             canvas.hidden = false;
             tapHint.hidden = false;
             spotPanel.hidden = true;
+            document.getElementById('self-check').hidden = false;
             sessionStorage.removeItem('spotCheckPct');  // new photo, new check
         };
         img.src = URL.createObjectURL(file);

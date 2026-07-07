@@ -9,6 +9,9 @@
 
     <form method="post" action="{{ url_for('result') }}" id="quiz-form">
         <input type="hidden" name="ai_spot" id="ai-spot">
+        <input type="hidden" name="hand_pale" id="hand-pale">
+        <input type="hidden" name="hand_yellow" id="hand-yellow">
+        <input type="hidden" name="hand_clubbing" id="hand-clubbing">
 
         <section class="step" data-step="0">
             <h2>About you</h2>
@@ -150,6 +153,12 @@
     // Bring along the AI spot-check result from the hand photo, if there was one.
     const aiSpot = sessionStorage.getItem('spotCheckPct');
     if (aiSpot !== null) document.getElementById('ai-spot').value = aiSpot;
+
+    // And the hand self-check observations from step 2.
+    const signs = JSON.parse(sessionStorage.getItem('handSigns') || '{}');
+    if (signs.pale) document.getElementById('hand-pale').value = '1';
+    if (signs.yellow) document.getElementById('hand-yellow').value = '1';
+    if (signs.clubbing) document.getElementById('hand-clubbing').value = '1';
 
     // Show the "middle score" notice when an "unsure" answer is picked.
     document.querySelectorAll('input[type=radio]').forEach(radio => {

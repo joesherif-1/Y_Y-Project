@@ -26,6 +26,14 @@
         {% endif %}
     </div>
 
+    {% if r.hand_flag %}
+    <div class="alert">
+        <p><strong>About your hand self-check:</strong> you noticed a yellow tint or a change in
+        your fingertip/nail shape. These aren't cancer tests, but they are signs doctors like to
+        check out soon — please book an appointment and mention exactly what you noticed.</p>
+    </div>
+    {% endif %}
+
     {% if r.red_flag %}
     <div class="alert">
         <p><strong>Please note:</strong> you reported a symptom (like unexplained weight loss, a new lump, or unusual

@@ -35,8 +35,8 @@ DURATION_POINTS = {
 
 # Highest score possible: age(4) + previous cancer(4) + chronic condition(2)
 # + family history(3) + smoking(4) + alcohol(2) + all symptoms(21) + duration(3)
-# + AI spot check(3)
-MAX_SCORE = 46
+# + AI spot check(3) + hand self-check: pale(2) + yellow(3) + clubbing(3)
+MAX_SCORE = 54
 
 
 def score_assessment(form):
@@ -114,6 +114,18 @@ def score_assessment(form):
             elif ai_pct >= 50:
                 add("AI spot check: similar to suspicious training images", 2)
 
+    # Hand self-check observations (made by the user's own eyes in step 2 -
+    # the AI cannot see color or 3D shape reliably from a phone photo).
+    hand_flag = False
+    if form.get("hand_pale") == "1":
+        add("Pale nails or palms (possible anemia clue)", 2)
+    if form.get("hand_yellow") == "1":
+        add("Yellow tint to skin or eyes (possible jaundice)", 3)
+        hand_flag = True
+    if form.get("hand_clubbing") == "1":
+        add("Fingertip/nail shape changes or swelling (clubbing)", 3)
+        hand_flag = True
+
     if total >= 16:
         level, level_class = "Elevated", "high"
     elif total >= 8:
@@ -132,6 +144,7 @@ def score_assessment(form):
         "level_class": level_class,
         "breakdown": breakdown,
         "red_flag": red_flag,
+        "hand_flag": hand_flag,
         "ai": ai,
     }
 

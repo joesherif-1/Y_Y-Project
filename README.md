@@ -22,6 +22,10 @@ factors. The site calculates a **risk-factor score** and explains what contribut
    If the user ran the AI spot check on their hand photo, its finding is scored too
    (suspicious-like ≥70% adds +3, 50–69% adds +2, benign-like adds 0) and explained
    on the results page with honest limits.
+   Step 2 is a guided hand self-check for signs a phone camera can't judge reliably —
+   pale nails/palms (+2), yellow-tinted skin or eyes (+3), fingertip clubbing/swelling
+   (+3) — observed by the user's own eyes and scored like any other risk factor; the
+   yellow-tint and clubbing signs also trigger a "see a doctor soon" note.
 
 ## Version 2: AI Skin Check (ML experiment)
 
