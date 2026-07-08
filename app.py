@@ -1,5 +1,13 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
+from io import BytesIO
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -149,6 +157,120 @@ def score_assessment(form):
     }
 
 
+LEVEL_COLORS = {
+    "low": colors.HexColor("#2e8b64"),
+    "medium": colors.HexColor("#c77f1d"),
+    "high": colors.HexColor("#bb4444"),
+}
+
+LEVEL_MEANING = {
+    "low": "Few known cancer risk factors apply to you right now. Keep up the healthy "
+           "habits &mdash; and remember this score is not a medical test.",
+    "medium": "Some known risk factors apply to you. That does <b>not</b> mean you have "
+               "cancer &mdash; most people with risk factors never get it &mdash; but "
+               "they're worth mentioning at your next doctor visit.",
+    "high": "Several known risk factors apply to you. This is <b>not</b> a diagnosis "
+            "&mdash; but booking a doctor's appointment to talk them through is a smart move.",
+}
+
+
+def build_pdf(r, app_name):
+    """Render the same results shown on-screen into a downloadable PDF."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=0.75 * inch, bottomMargin=0.75 * inch,
+        leftMargin=0.75 * inch, rightMargin=0.75 * inch,
+    )
+    styles = getSampleStyleSheet()
+    navy = colors.HexColor("#16324c")
+    muted = colors.HexColor("#5c6b78")
+
+    title_style = ParagraphStyle("TitleStyle", parent=styles["Title"], textColor=navy, fontSize=18)
+    h2_style = ParagraphStyle("H2Style", parent=styles["Heading2"], textColor=navy, fontSize=13, spaceBefore=14)
+    body_style = ParagraphStyle("BodyStyle", parent=styles["Normal"], fontSize=10.5, leading=15)
+    muted_style = ParagraphStyle("MutedStyle", parent=styles["Normal"], fontSize=9, leading=13, textColor=muted)
+    small_note = ParagraphStyle("SmallNote", parent=styles["Normal"], fontSize=8.5, leading=12, textColor=muted)
+
+    story = []
+    story.append(Paragraph(app_name, title_style))
+    story.append(Paragraph("Risk-Factor Assessment Results", muted_style))
+    story.append(Spacer(1, 14))
+
+    level_color = LEVEL_COLORS.get(r["level_class"], navy)
+    score_style = ParagraphStyle("ScoreStyle", parent=styles["Normal"], fontSize=26, textColor=level_color, leading=30)
+    story.append(Paragraph(f"Score: {r['total']} / {r['max_score']}  &mdash;  {r['level']} risk-factor level", score_style))
+    story.append(Spacer(1, 10))
+    story.append(HRFlowable(width="100%", color=colors.HexColor("#d7e3ee")))
+    story.append(Spacer(1, 10))
+
+    story.append(Paragraph("What your level means", h2_style))
+    story.append(Paragraph(LEVEL_MEANING.get(r["level_class"], ""), body_style))
+
+    if r.get("hand_flag"):
+        story.append(Paragraph("Your hand self-check", h2_style))
+        story.append(Paragraph(
+            "You noticed a <b>yellow tint</b> or a <b>change in fingertip or nail shape</b>. "
+            "These aren't cancer tests, but doctors like to check them soon &mdash; book an "
+            "appointment and describe exactly what you saw.", body_style))
+
+    if r.get("red_flag"):
+        story.append(Paragraph("About your symptoms", h2_style))
+        story.append(Paragraph(
+            "A symptom like <b>unexplained weight loss, a new lump, or unusual bleeding</b> "
+            "that lasts 2+ weeks deserves a doctor's visit soon &mdash; whatever your score "
+            "says.", body_style))
+
+    if r.get("ai"):
+        pct = r["ai"]["pct"]
+        if pct >= 70:
+            add_note = "It added <b>+3 points</b> &mdash; show that spot to a dermatologist."
+        elif pct >= 50:
+            add_note = "It added <b>+2 points</b> &mdash; show that spot to a dermatologist."
+        else:
+            add_note = "Reassuring, so it added <b>+0 points</b> &mdash; keep an eye on it."
+        story.append(Paragraph("Your AI spot check", h2_style))
+        story.append(Paragraph(
+            f"The spot you tapped scored <b>{pct}% suspicious-like</b> ({100 - pct}% benign-like) "
+            f"against the model's dermatology training images. {add_note}", body_style))
+        story.append(Paragraph(
+            "One small crop from a phone photo &mdash; an experiment, not an examination.",
+            small_note))
+    else:
+        story.append(Paragraph("About your hand photo", h2_style))
+        story.append(Paragraph(
+            "No AI spot check this time, so your photo added <b>+0 points</b> &mdash; a photo "
+            "alone can't show whether someone has cancer. In person, doctors can spot clues "
+            "like nail shape and color changes that no website can judge.", body_style))
+
+    if r.get("breakdown"):
+        story.append(Paragraph("What added points", h2_style))
+        table_data = [["Factor", "Points"]] + [[label, f"+{points}"] for label, points in r["breakdown"]]
+        table = Table(table_data, colWidths=[4.6 * inch, 0.9 * inch])
+        table.setStyle(TableStyle([
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("TEXTCOLOR", (0, 0), (-1, 0), navy),
+            ("FONTSIZE", (0, 0), (-1, -1), 9.5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("LINEBELOW", (0, 0), (-1, -2), 0.5, colors.HexColor("#e8eef4")),
+            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ]))
+        story.append(table)
+
+    story.append(Spacer(1, 16))
+    story.append(HRFlowable(width="100%", color=colors.HexColor("#d7e3ee")))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph(
+        "<b>Not a diagnosis:</b> this student project counts general risk factors and compares "
+        "photos to training images &mdash; it cannot detect cancer. Please talk to a healthcare "
+        "professional about any concerns.", small_note))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+
 @app.route("/")
 def index():
     return render_template("index.html", app_name=APP_NAME)
@@ -163,7 +285,23 @@ def questionnaire():
 def result():
     if request.method == "GET":
         return redirect(url_for("index"))
-    return render_template("result.html", app_name=APP_NAME, r=score_assessment(request.form))
+    r = score_assessment(request.form)
+    session["last_result"] = r
+    return render_template("result.html", app_name=APP_NAME, r=r)
+
+
+@app.route("/result/download")
+def download_pdf():
+    r = session.get("last_result")
+    if not r:
+        return redirect(url_for("index"))
+    buffer = build_pdf(r, APP_NAME)
+    return send_file(
+        buffer,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name="cancer-risk-checker-results.pdf",
+    )
 
 
 @app.route("/skin-check")

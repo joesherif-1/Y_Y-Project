@@ -104,9 +104,9 @@
         general risk factors and compares photos to training images &mdash; it cannot detect cancer.
         Please talk to a healthcare professional about any concerns.</p>
 
-        <button type="button" id="print-btn" class="btn btn-secondary" style="margin-top:14px" onclick="window.print()">
-            🖨️ Download / Print as PDF
-        </button>
+        <a href="{{ url_for('download_pdf') }}" id="print-btn" class="btn btn-secondary" style="margin-top:14px">
+            ⬇️ Download Results as PDF
+        </a>
     </div>
 </div>
 
