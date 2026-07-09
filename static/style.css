@@ -538,3 +538,21 @@ input:focus, select:focus, textarea:focus {
     color: #8fa0ae;
     line-height: 1.6;
 }
+
+/* Print-friendly results summary */
+@media print {
+    body { background: #fff; padding: 0; }
+    .container { box-shadow: none; border: none; max-width: 100%; padding: 0; }
+    .footer, .info-btn, .cards-nav, .nav-buttons, #print-btn { display: none !important; }
+    .cards-track {
+        display: block;
+        overflow: visible;
+    }
+    .flash-card {
+        flex: none;
+        page-break-inside: avoid;
+        margin-bottom: 14px;
+        border: 1px solid #ccc;
+    }
+    #score-stage { min-height: auto; }
+}
