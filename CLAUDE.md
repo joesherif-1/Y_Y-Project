@@ -22,8 +22,17 @@ service (gunicorn via `Procfile`).
 
 **Flask app (`app.py`)** — all routes and all scoring logic in one file:
 
-- `/` (`templates/index.html`) — hand-photo check-in unlocks the questionnaire; optional "AI spot check"
-  crops a 224×224 square around a tapped point and runs the ML model on it, client-side.
+- `/` (`templates/index.html`) — a 3-screen fade wizard (photo → self-check → start). The optional
+  "AI spot check" crops a 224×224 square and runs the ML model on it client-side: if the user taps a
+  spot it uses that; if they press Analyze without tapping, `autoDetectSpot()` scans a downscaled copy
+  for the spot darkest-relative-to-its-surroundings and crops there. Either way the model only ever
+  sees one single-spot crop (never the whole hand) — keep it that way. The result percentage rides
+  `sessionStorage` → a hidden questionnaire field → the score.
+- `/result/download` — `build_pdf()` (reportlab) re-renders the results as a downloadable PDF from
+  `session["last_result"]`; its wording must track the flash cards in `result.html`.
+- `static/ui.js` — shared helpers loaded on every page: `fadeSwap` (screen/step fades), whole-card
+  fade in/out (`.container.ready`/`.card-fading`), `playSound` (Web Audio, no files), the info
+  popover, and the results flash-card carousel. All respect `prefers-reduced-motion`.
 - `/questionnaire` (`templates/questionnaire.html`) — a single page; JS shows one of 7 `<section class="step">`s
   at a time and POSTs everything to `/result`.
 - `/result` — `score_assessment()` turns answers into a weighted score. `SYMPTOMS`, `RED_FLAGS`,

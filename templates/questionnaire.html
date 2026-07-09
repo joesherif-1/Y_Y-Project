@@ -150,9 +150,23 @@
         return true;
     }
 
-    nextBtn.addEventListener('click', () => { if (stepIsValid()) show(current + 1); });
-    backBtn.addEventListener('click', () => show(current - 1));
+    nextBtn.addEventListener('click', () => { if (stepIsValid()) { playSound('step'); show(current + 1); } });
+    backBtn.addEventListener('click', () => { playSound('back'); show(current - 1); });
     show(0);
+
+    // Subtle tick when picking an answer.
+    document.querySelectorAll('.step input').forEach(el => {
+        el.addEventListener('change', () => playSound('tick'));
+    });
+
+    // On submit, play the reveal chime and fade the card out before the page loads.
+    document.getElementById('quiz-form').addEventListener('submit', (e) => {
+        if (REDUCED_MOTION) { playSound('reveal'); return; }
+        e.preventDefault();
+        playSound('reveal');
+        document.querySelector('.container').classList.add('card-fading');
+        setTimeout(() => e.target.submit(), 240);
+    });
 
     // Bring along the AI spot-check result from the hand photo, if there was one.
     const aiSpot = sessionStorage.getItem('spotCheckPct');

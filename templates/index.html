@@ -12,8 +12,9 @@
             <h2>What happens here?</h2>
             <ol class="info-list">
                 <li><strong>Hand photo + AI spot check</strong> <span class="chip optional">Optional</span><br>
-                    Take a photo, tap a mole or spot, and our neural network compares that exact spot
-                    with dermatology images it trained on. Can add up to 3 points to your score.</li>
+                    Take a photo and our neural network compares a skin spot with dermatology images
+                    it trained on. Tap a spot to focus on it, or let the AI scan the whole photo.
+                    Can add up to 3 points to your score.</li>
                 <li><strong>Quick hand self-check</strong> <span class="chip optional">Optional</span><br>
                     Your own eyes check for pale, yellow, or shape changes the camera can't judge.
                     Can add up to 8 points.</li>
@@ -31,8 +32,8 @@
     <section class="screen fade-step" data-screen="0">
         <h1>Take a photo of your hand</h1>
         <p class="start-text">
-            Snap a photo, then <strong>tap any mole or spot on it</strong> &mdash; our AI zooms in
-            and checks that exact spot against real dermatology images. It counts toward your final
+            Snap a photo, then <strong>tap any mole or spot</strong> for the AI to zoom in &mdash; or
+            just press Analyze and it scans the whole photo for you. The finding counts toward your
             score. <em>No spots to check? Just continue.</em>
         </p>
 
@@ -44,14 +45,13 @@
             <input type="file" id="photo-input" accept="image/*" capture="user" hidden>
 
             <canvas id="hand-canvas" hidden></canvas>
-            <p class="hint" id="tap-hint" hidden>
-                <strong>AI spot check:</strong> tap any mole or dark spot on your photo.
-            </p>
 
             <div id="spot-panel" hidden>
-                <p class="hint" id="spot-status">Close-up of the spot you tapped:</p>
-                <img id="crop-preview" class="crop-preview" alt="Zoomed crop of the tapped spot">
-                <button type="button" id="spot-analyze" class="btn btn-primary">Analyze this spot</button>
+                <p class="hint" id="tap-hint">Tap a mole or spot to focus on it &mdash; or press
+                    <strong>Analyze</strong> to scan the whole photo.</p>
+                <img id="crop-preview" class="crop-preview" alt="Zoomed crop of the spot" hidden>
+                <p class="hint" id="spot-status" hidden></p>
+                <button type="button" id="spot-analyze" class="btn btn-primary">Analyze</button>
                 <div id="spot-result" hidden>
                     <div class="prob-row">
                         <span class="prob-label">Looks benign-like</span>
@@ -65,9 +65,9 @@
                     </div>
                     <p class="hint" id="spot-advice" style="text-align:left"></p>
                     <p class="hint" style="text-align:left">
-                        This finding will be added to your questionnaire score. The AI only judges
-                        the small square you tapped &mdash; an experiment, not a diagnosis. For a
-                        better photo check, use a close-up on the
+                        This finding is added to your questionnaire score. The AI only judges one
+                        small skin spot &mdash; an experiment, not a diagnosis. For a better photo
+                        check, use a close-up on the
                         <a href="{{ url_for('skin_check') }}">AI Skin Check</a> page.
                     </p>
                 </div>
@@ -102,7 +102,7 @@
             and how long they've lasted. It takes about two minutes, and you'll get your score
             with a full breakdown at the end.
         </p>
-        <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary">
+        <a id="start-btn" href="{{ url_for('questionnaire') }}" class="btn btn-primary" data-fade-nav>
             Start Questionnaire
         </a>
         <div class="disclaimer">
@@ -121,14 +121,15 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 <script>
-    // ----- Wizard: one screen at a time with fade transitions -----
+    // ----- Wizard: one screen at a time with fade transitions + sounds -----
     const screens = [...document.querySelectorAll('.screen')];
     const wizBack = document.getElementById('wiz-back');
     const wizNext = document.getElementById('wiz-next');
     const wizLabel = document.getElementById('wiz-label');
     let screenNow = 0;
 
-    function goScreen(i) {
+    function goScreen(i, dir) {
+        playSound(dir === 'back' ? 'back' : 'step');
         fadeSwap(screens[screenNow], screens[i]);
         screenNow = i;
         wizBack.hidden = i === 0;
@@ -136,16 +137,16 @@
         wizLabel.textContent = 'Step ' + (i + 1) + ' of ' + screens.length;
         window.scrollTo(0, 0);
     }
-    wizNext.addEventListener('click', () => goScreen(screenNow + 1));
-    wizBack.addEventListener('click', () => goScreen(screenNow - 1));
+    wizNext.addEventListener('click', () => goScreen(screenNow + 1, 'fwd'));
+    wizBack.addEventListener('click', () => goScreen(screenNow - 1, 'back'));
 
     // ----- Photo + AI spot check -----
     const input = document.getElementById('photo-input');
     const canvas = document.getElementById('hand-canvas');
     const ctx = canvas.getContext('2d');
     const prompt = document.getElementById('photo-prompt');
-    const tapHint = document.getElementById('tap-hint');
     const spotPanel = document.getElementById('spot-panel');
+    const tapHint = document.getElementById('tap-hint');
     const spotStatus = document.getElementById('spot-status');
     const cropPreview = document.getElementById('crop-preview');
     const analyzeBtn = document.getElementById('spot-analyze');
@@ -153,16 +154,18 @@
 
     let handImage = null;
     let cropCanvas = null;     // 224x224 crop fed to the model
-    let modelPromise = null;   // model loads lazily, on the first tap
+    let userTapped = false;    // did the user pick a spot, or should we auto-scan?
+    let modelPromise = null;   // model loads lazily once a photo is added
 
     // A fresh visit starts a fresh assessment - forget any earlier results.
     sessionStorage.removeItem('spotCheckPct');
     sessionStorage.removeItem('handSigns');
 
-    // Save the self-check ticks so the questionnaire can carry them to the score.
+    // Save the self-check ticks (with a tick sound) so the questionnaire can score them.
     const signBoxes = { pale: 'hand-pale', yellow: 'hand-yellow', clubbing: 'hand-clubbing' };
     Object.values(signBoxes).forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
+            playSound('tick');
             const signs = {};
             for (const [key, boxId] of Object.entries(signBoxes)) {
                 signs[key] = document.getElementById(boxId).checked;
@@ -181,50 +184,97 @@
             canvas.height = img.naturalHeight;
             ctx.drawImage(img, 0, 0);
             canvas.hidden = false;
-            tapHint.hidden = false;
-            spotPanel.hidden = true;
+            spotPanel.hidden = false;
+            cropPreview.hidden = true;
+            spotStatus.hidden = true;
+            spotResult.hidden = true;
+            analyzeBtn.hidden = false;
+            cropCanvas = null;
+            userTapped = false;
             sessionStorage.removeItem('spotCheckPct');  // new photo, new check
+            if (!modelPromise) modelPromise = tf.loadGraphModel('/static/model/model.json');
         };
         img.src = URL.createObjectURL(file);
         prompt.textContent = '📷 Photo added! Tap to retake';
+        playSound('tick');
     });
+
+    // Build a 224x224 crop and draw the marker box on the hand photo.
+    function makeCrop(sx, sy, size) {
+        cropCanvas = document.createElement('canvas');
+        cropCanvas.width = cropCanvas.height = 224;
+        cropCanvas.getContext('2d').drawImage(handImage, sx, sy, size, size, 0, 0, 224, 224);
+        cropPreview.src = cropCanvas.toDataURL();
+        cropPreview.hidden = false;
+        ctx.drawImage(handImage, 0, 0);
+        ctx.strokeStyle = '#1f6fb2';
+        ctx.lineWidth = Math.max(3, canvas.width / 180);
+        ctx.strokeRect(sx, sy, size, size);
+    }
+
+    // Scan a downscaled copy of the photo for the spot that is darkest relative to
+    // the skin around it - a simple stand-in for "find the most mole-like spot".
+    function autoDetectSpot() {
+        const W = canvas.width, H = canvas.height;
+        const dw = 80, dh = Math.max(1, Math.round(80 * H / W));
+        const tmp = document.createElement('canvas');
+        tmp.width = dw; tmp.height = dh;
+        const tctx = tmp.getContext('2d');
+        tctx.drawImage(handImage, 0, 0, dw, dh);
+        const px = tctx.getImageData(0, 0, dw, dh).data;
+        const bright = new Float32Array(dw * dh);
+        for (let i = 0; i < dw * dh; i++) {
+            bright[i] = 0.299 * px[i*4] + 0.587 * px[i*4+1] + 0.114 * px[i*4+2];
+        }
+        const margin = Math.round(Math.min(dw, dh) * 0.15);
+        const rad = 4;
+        let best = -Infinity, bx = dw / 2, by = dh / 2;
+        for (let y = margin; y < dh - margin; y++) {
+            for (let x = margin; x < dw - margin; x++) {
+                let sum = 0, cnt = 0;
+                for (let yy = -rad; yy <= rad; yy++)
+                    for (let xx = -rad; xx <= rad; xx++) {
+                        const nx = x + xx, ny = y + yy;
+                        if (nx >= 0 && nx < dw && ny >= 0 && ny < dh) { sum += bright[ny*dw+nx]; cnt++; }
+                    }
+                const score = sum / cnt - bright[y*dw+x];   // darker than surroundings wins
+                if (score > best) { best = score; bx = x; by = y; }
+            }
+        }
+        const size = Math.min(W, H) / 4;
+        const sx = Math.min(Math.max(bx / dw * W - size / 2, 0), W - size);
+        const sy = Math.min(Math.max(by / dh * H - size / 2, 0), H - size);
+        return { sx, sy, size };
+    }
 
     canvas.addEventListener('click', (e) => {
         if (!handImage) return;
         const rect = canvas.getBoundingClientRect();
         const x = (e.clientX - rect.left) * canvas.width / rect.width;
         const y = (e.clientY - rect.top) * canvas.height / rect.height;
-
-        // Crop a square around the tap, a quarter of the shorter photo side.
         const size = Math.min(canvas.width, canvas.height) / 4;
         const sx = Math.min(Math.max(x - size / 2, 0), canvas.width - size);
         const sy = Math.min(Math.max(y - size / 2, 0), canvas.height - size);
-
-        cropCanvas = document.createElement('canvas');
-        cropCanvas.width = cropCanvas.height = 224;
-        cropCanvas.getContext('2d').drawImage(handImage, sx, sy, size, size, 0, 0, 224, 224);
-        cropPreview.src = cropCanvas.toDataURL();
-
-        // Mark the tapped area on the hand photo.
-        ctx.drawImage(handImage, 0, 0);
-        ctx.strokeStyle = '#1a6fb5';
-        ctx.lineWidth = Math.max(3, canvas.width / 200);
-        ctx.strokeRect(sx, sy, size, size);
-
+        makeCrop(sx, sy, size);
+        userTapped = true;
+        spotStatus.hidden = false;
         spotStatus.textContent = 'Close-up of the spot you tapped:';
         spotResult.hidden = true;
-        analyzeBtn.hidden = false;
-        spotPanel.hidden = false;
-
-        if (!modelPromise) {
-            modelPromise = tf.loadGraphModel('/static/model/model.json');
-        }
+        playSound('tick');
     });
 
     analyzeBtn.addEventListener('click', async () => {
-        if (!cropCanvas) return;
+        if (!handImage) return;
         analyzeBtn.textContent = 'Analyzing...';
         try {
+            if (!cropCanvas) {
+                // No spot tapped - scan the whole photo and pick the most noticeable spot.
+                const s = autoDetectSpot();
+                makeCrop(s.sx, s.sy, s.size);
+                spotStatus.hidden = false;
+                spotStatus.textContent = 'No spot tapped, so we scanned your whole photo and ' +
+                    'checked the most noticeable spot (boxed above). Tap a different spot to check that instead.';
+            }
             const model = await modelPromise;
             // The model starts with a Rescaling layer, so we feed raw 0-255 pixels.
             const t = tf.tidy(() => tf.browser.fromPixels(cropCanvas).toFloat().expandDims(0));
@@ -249,11 +299,12 @@
                     'training images. Keep an eye on it, and see a doctor if it changes.';
             }
             spotResult.hidden = false;
-            analyzeBtn.hidden = true;
+            playSound('done');
         } catch (err) {
+            spotStatus.hidden = false;
             spotStatus.textContent = 'The AI model could not be loaded — you can still take the questionnaire.';
         }
-        analyzeBtn.textContent = 'Analyze this spot';
+        analyzeBtn.textContent = 'Analyze again';
     });
 </script>
 {% endblock %}

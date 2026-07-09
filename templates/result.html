@@ -89,7 +89,7 @@
                     <p>{% if r.level_class == 'low' %}No action needed &mdash; stay curious about your
                     health and re-check if anything changes.{% else %}Bring this list to a doctor and
                     talk it through &mdash; that's what these scores are for.{% endif %}</p>
-                    <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:12px">Start Over</a>
+                    <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:12px" data-fade-nav>Start Over</a>
                 </div>
 
             </div>
@@ -123,6 +123,7 @@
             void detail.offsetWidth;
             detail.classList.remove('is-fading');
         }
+        playSound('reveal');
         setupCarousel(document.getElementById('cards'));
     }, dockDelay);
 </script>
