@@ -84,7 +84,7 @@
             <h2>Symptoms</h2>
             <p class="field-label">Have you noticed any of these recently? Tick all that apply, or none.</p>
             <div class="options checklist">
-                {% for key, (label, points) in symptoms.items() %}
+                {% for key, (label, points, explain) in symptoms.items() %}
                 <label class="option"><input type="checkbox" name="symptoms" value="{{ key }}"><span>{{ label }}</span></label>
                 {% endfor %}
             </div>

@@ -477,18 +477,41 @@ input:focus, select:focus, textarea:focus {
 .card-note { font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
 .breakdown-list {
     list-style: none;
-    max-height: 190px;
+    max-height: 260px;
     overflow-y: auto;
     font-size: 0.88rem;
 }
-.breakdown-list li {
+.breakdown-item { border-bottom: 1px solid #e0e9f1; }
+.breakdown-toggle {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 12px;
-    padding: 7px 2px;
-    border-bottom: 1px solid #e0e9f1;
+    width: 100%;
+    padding: 9px 4px;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
 }
-.breakdown-list .points { font-weight: 700; color: var(--blue-dark); }
+.breakdown-toggle::before {
+    content: '›';
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+}
+.breakdown-toggle.open::before { transform: rotate(90deg); }
+.breakdown-toggle:hover { color: var(--blue-dark); }
+.breakdown-toggle .points { font-weight: 700; color: var(--blue-dark); white-space: nowrap; }
+.breakdown-explain {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding: 0 4px 12px 20px;
+}
 
 .cards-nav {
     display: flex;
