@@ -76,9 +76,18 @@
                 {% if r.breakdown %}
                 <div class="flash-card">
                     <h2>What added points</h2>
+                    <p class="card-note" style="margin-top:-6px; margin-bottom:10px">Tap any factor to see why it matters.</p>
                     <ul class="breakdown-list">
-                        {% for label, points in r.breakdown %}
-                        <li><span>{{ label }}</span><span class="points">+{{ points }}</span></li>
+                        {% for item in r.breakdown %}
+                        <li class="breakdown-item">
+                            <button type="button" class="breakdown-toggle">
+                                <span>{{ item.label }}</span>
+                                <span class="points">+{{ item.points }}</span>
+                            </button>
+                            {% if item.explain %}
+                            <p class="breakdown-explain" hidden>{{ item.explain }}</p>
+                            {% endif %}
+                        </li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -126,5 +135,16 @@
         playSound('reveal');
         setupCarousel(document.getElementById('cards'));
     }, dockDelay);
+
+    // Tap a breakdown factor to reveal a short "why this matters" explanation.
+    document.querySelectorAll('.breakdown-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const explain = btn.nextElementSibling;
+            if (explain && explain.classList.contains('breakdown-explain')) {
+                explain.hidden = !explain.hidden;
+                btn.classList.toggle('open', !explain.hidden);
+            }
+        });
+    });
 </script>
 {% endblock %}

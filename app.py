@@ -14,19 +14,39 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-producti
 
 APP_NAME = "Cancer Risk-Factor Checker"
 
-# Symptoms the questionnaire asks about: key -> (label shown to user, points)
+# Symptoms the questionnaire asks about: key -> (label shown to user, points, why it matters)
 # Points are higher for "red flag" symptoms doctors take most seriously.
 SYMPTOMS = {
-    "weight_loss": ("Unexplained weight loss", 3),
-    "lump": ("A new lump or swelling", 3),
-    "bleeding": ("Unusual bleeding or bruising", 3),
-    "pain": ("Persistent pain that doesn't go away", 2),
-    "fever": ("Recurring fever or night sweats", 2),
-    "cough": ("A cough or hoarseness that won't go away", 2),
-    "bowel": ("A change in bowel or bladder habits", 2),
-    "skin": ("A change in a mole or patch of skin", 2),
-    "fatigue": ("Constant tiredness (fatigue)", 1),
-    "appetite": ("Loss of appetite", 1),
+    "weight_loss": ("Unexplained weight loss", 3,
+        "Losing weight without trying can be a sign the body is fighting something and is "
+        "worth checking with a doctor, especially alongside other symptoms."),
+    "lump": ("A new lump or swelling", 3,
+        "New lumps or swelling have many possible causes, but doctors recommend any new one "
+        "be examined in person."),
+    "bleeding": ("Unusual bleeding or bruising", 3,
+        "Unusual bleeding or bruising can point to several different conditions, so it's one "
+        "doctors want to investigate directly."),
+    "pain": ("Persistent pain that doesn't go away", 2,
+        "Pain that lingers rather than fading is the body's way of signaling something needs "
+        "attention."),
+    "fever": ("Recurring fever or night sweats", 2,
+        "Recurring fevers or night sweats are often linked to infections, and less commonly "
+        "to other conditions doctors screen for."),
+    "cough": ("A cough or hoarseness that won't go away", 2,
+        "A cough or hoarseness lasting weeks is taken seriously by doctors, especially for "
+        "smokers or former smokers."),
+    "bowel": ("A change in bowel or bladder habits", 2,
+        "Changes in bowel or bladder habits are a symptom doctors specifically ask about "
+        "during check-ups."),
+    "skin": ("A change in a mole or patch of skin", 2,
+        "Changes in a mole or skin patch are exactly what the ABCDE rule and this site's AI "
+        "spot check are designed to help you notice."),
+    "fatigue": ("Constant tiredness (fatigue)", 1,
+        "Constant tiredness has many everyday causes, but combined with other symptoms it's "
+        "worth mentioning to a doctor."),
+    "appetite": ("Loss of appetite", 1,
+        "Losing your appetite for no clear reason, especially alongside other symptoms, is "
+        "worth a doctor's opinion."),
 }
 
 # Symptoms that should always trigger a "please see a doctor" message,
@@ -52,10 +72,10 @@ def score_assessment(form):
     breakdown = []
     total = 0
 
-    def add(label, points):
+    def add(label, points, explain=""):
         nonlocal total
         if points > 0:
-            breakdown.append((label, points))
+            breakdown.append({"label": label, "points": points, "explain": explain})
             total += points
 
     try:
@@ -63,47 +83,71 @@ def score_assessment(form):
     except ValueError:
         age = 0
     if age >= 60:
-        add("Age 60 or older", 4)
+        add("Age 60 or older", 4,
+            "Cancer risk generally rises with age, mainly because cells build up genetic "
+            "changes over a longer lifetime.")
     elif age >= 40:
-        add("Age 40-59", 2)
+        add("Age 40-59", 2,
+            "Risk starts climbing in this range, though it's still noticeably lower than for "
+            "older adults.")
 
     # "Unsure" answers get a middle score, so an unknown history
     # is treated more carefully than a clear "no".
     if form.get("prev_cancer") == "yes":
-        add("Previous cancer diagnosis", 4)
+        add("Previous cancer diagnosis", 4,
+            "A past cancer diagnosis means doctors watch more closely for it returning or for "
+            "a second, unrelated cancer forming.")
     elif form.get("prev_cancer") == "unsure":
-        add("Unsure about previous diagnosis (middle score)", 2)
+        add("Unsure about previous diagnosis (middle score)", 2,
+            "Since it's unclear, this gets a cautious middle score rather than assuming a "
+            "clear \"no\" — worth checking your health records.")
 
     if form.get("chronic") == "yes":
-        add("Long-term medical condition", 2)
+        add("Long-term medical condition", 2,
+            "Some chronic conditions (like long-term hepatitis or inflammatory bowel disease) "
+            "are linked to higher cancer risk over time.")
     elif form.get("chronic") == "unsure":
-        add("Unsure about long-term conditions (middle score)", 1)
+        add("Unsure about long-term conditions (middle score)", 1,
+            "Same reasoning as above — an unknown history gets a cautious middle score.")
 
     if form.get("family_cancer") == "yes":
-        add("Close family member with cancer", 3)
+        add("Close family member with cancer", 3,
+            "Shared genes and sometimes shared environment mean a family history can point to "
+            "inherited risk factors.")
     elif form.get("family_cancer") == "unsure":
-        add("Unsure about family cancer history (middle score)", 2)
+        add("Unsure about family cancer history (middle score)", 2,
+            "A cautious middle score, since an unknown family history could be hiding a real "
+            "pattern.")
 
     smoking = form.get("smoking")
     if smoking == "current":
-        add("Currently smokes", 4)
+        add("Currently smokes", 4,
+            "Smoking is one of the most well-established cancer risk factors, linked to many "
+            "cancer types beyond just the lungs.")
     elif smoking == "former":
-        add("Used to smoke", 2)
+        add("Used to smoke", 2,
+            "Former smokers still carry increased risk, though it gradually declines the "
+            "longer someone has quit.")
 
     alcohol = form.get("alcohol")
     if alcohol == "regular":
-        add("Drinks alcohol regularly", 2)
+        add("Drinks alcohol regularly", 2,
+            "Regular alcohol use is linked to several cancer types, with risk rising alongside "
+            "the amount consumed.")
     elif alcohol == "occasional":
-        add("Drinks alcohol occasionally", 1)
+        add("Drinks alcohol occasionally", 1,
+            "Occasional drinking carries a smaller, but non-zero, increase in risk.")
 
     chosen = [s for s in form.getlist("symptoms") if s in SYMPTOMS]
     for key in chosen:
-        label, points = SYMPTOMS[key]
-        add(label, points)
+        label, points, explain = SYMPTOMS[key]
+        add(label, points, explain)
 
     duration = form.get("duration", "none")
     if chosen:
-        add("How long the symptoms have lasted", DURATION_POINTS.get(duration, 0))
+        add("How long the symptoms have lasted", DURATION_POINTS.get(duration, 0),
+            "Symptoms that stick around longer are generally taken more seriously by doctors "
+            "than ones that pass quickly.")
 
     # AI spot check from the hand photo (percentage 0-100, set by the browser).
     # It only ever sees one cropped spot, so it gets modest weight - at most the
@@ -118,20 +162,30 @@ def score_assessment(form):
         if ai_pct is not None:
             ai = {"pct": ai_pct}
             if ai_pct >= 70:
-                add("AI spot check: strongly similar to suspicious training images", 3)
+                add("AI spot check: strongly similar to suspicious training images", 3,
+                    "The model found this spot visually much closer to the \"suspicious\" "
+                    "training images than most spots it has seen.")
             elif ai_pct >= 50:
-                add("AI spot check: similar to suspicious training images", 2)
+                add("AI spot check: similar to suspicious training images", 2,
+                    "The model found this spot somewhat closer to the \"suspicious\" side, "
+                    "though less strongly than a high score would show.")
 
     # Hand self-check observations (made by the user's own eyes in step 2 -
     # the AI cannot see color or 3D shape reliably from a phone photo).
     hand_flag = False
     if form.get("hand_pale") == "1":
-        add("Pale nails or palms (possible anemia clue)", 2)
+        add("Pale nails or palms (possible anemia clue)", 2,
+            "Paleness in nails or palms can be a simple clue for low iron (anemia), which "
+            "sometimes has an underlying cause worth checking.")
     if form.get("hand_yellow") == "1":
-        add("Yellow tint to skin or eyes (possible jaundice)", 3)
+        add("Yellow tint to skin or eyes (possible jaundice)", 3,
+            "Yellowing of skin or eyes (jaundice) usually points to a liver or bile-related "
+            "issue that needs prompt medical attention.")
         hand_flag = True
     if form.get("hand_clubbing") == "1":
-        add("Fingertip/nail shape changes or swelling (clubbing)", 3)
+        add("Fingertip/nail shape changes or swelling (clubbing)", 3,
+            "Clubbing (rounded, swollen fingertips) is a recognized clinical sign linked to "
+            "several lung and heart conditions.")
         hand_flag = True
 
     if total >= 16:
@@ -245,18 +299,23 @@ def build_pdf(r, app_name):
 
     if r.get("breakdown"):
         story.append(Paragraph("What added points", h2_style))
-        table_data = [["Factor", "Points"]] + [[label, f"+{points}"] for label, points in r["breakdown"]]
-        table = Table(table_data, colWidths=[4.6 * inch, 0.9 * inch])
-        table.setStyle(TableStyle([
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("TEXTCOLOR", (0, 0), (-1, 0), navy),
-            ("FONTSIZE", (0, 0), (-1, -1), 9.5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ("TOPPADDING", (0, 0), (-1, -1), 6),
-            ("LINEBELOW", (0, 0), (-1, -2), 0.5, colors.HexColor("#e8eef4")),
-            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ]))
-        story.append(table)
+        for item in r["breakdown"]:
+            row = Table(
+                [[item["label"], f"+{item['points']}"]],
+                colWidths=[4.6 * inch, 0.9 * inch],
+            )
+            row.setStyle(TableStyle([
+                ("FONTNAME", (0, 0), (0, 0), "Helvetica-Bold"),
+                ("TEXTCOLOR", (0, 0), (0, 0), navy),
+                ("FONTSIZE", (0, 0), (-1, -1), 9.5),
+                ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ]))
+            story.append(row)
+            if item.get("explain"):
+                story.append(Paragraph(item["explain"], small_note))
+            story.append(HRFlowable(width="100%", color=colors.HexColor("#e8eef4")))
 
     story.append(Spacer(1, 16))
     story.append(HRFlowable(width="100%", color=colors.HexColor("#d7e3ee")))
