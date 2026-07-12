@@ -62,6 +62,14 @@ static/style.css          # styling (Flask requires this folder name)
 Procfile                  # for deploying on Render
 ```
 
+## Roadmap / Next Steps
+
+- AI model at the end of the program
+- Very polished UI
+- Test with real people
+- Make it go public
+- Write a research
+
 ## Deploy to Render
 
 1. Push the code to a GitHub repository.
